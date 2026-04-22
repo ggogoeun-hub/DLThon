@@ -16,6 +16,7 @@ DLthon/
 │   ├── eda.md          # 6개 카테고리, 13개 세부 분석 지표 설계안
 │   ├── strategy.md     # EDA 기반 전처리·증강·합성 데이터 생성 전략 보고서
 │   ├── model_plan.md   # [NEW] 베이스라인 모델 아키텍처 및 학습 계획서
+│   └── implementation_plan.md # 프로젝트 로드맵 및 구조 계획
 ├── notebooks/          # 분석 및 실험용 Interactive Notebook
 │   ├── train_eda.ipynb # 13개 지표 시각화 및 통계 분석 메인 노트북
 │   └── model.ipynb     # [NEW] 베이스라인 모델 학습, 평가 및 추론 노트북
@@ -73,4 +74,3 @@ DLthon/
 - **Run Analysis**:
   ```bash
   python src/eda_runner.py
-
