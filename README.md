@@ -37,7 +37,7 @@ DLthon/
 │   └── synthetic/                         #   합성 데이터 설계 (상세)
 │       ├── README.md                      #     개요 & 4축 프레임워크
 │       ├── profile_threat.md              #     위협 대화 구조 프로파일 (4축 수치)
-│       ├── generation_guide.md            #     생성 가이드라인 (프롬프트 설계)
+│       ├── generation_guide_v1.md         #     생성 가이드라인 (프롬프트 설계)
 │       └── validation.md                  #     품질 검증 기준 & 자동 검증 코드
 │
 ├── figures/                               # EDA & 분석 시각화
@@ -53,14 +53,11 @@ DLthon/
 │
 ├── outputs/                               # 실험 결과
 │   ├── ablation_study.csv                 #   Ablation Study 기록
-│   ├── submission_baseline.csv            #   B01 제출 파일
-│   ├── submission_v2.csv                  #   S01 제출 파일
-│   ├── submission_v3.csv                  #   v3 제출 파일 (현재 최고)
-│   └── submission_v4.csv                  #   S02 제출 파일
+│   └── submission_*.csv                   #   Kaggle 제출 파일
 │
 ├── baseline.csv                           # 증강 포함 학습셋 (15,000건, 5×3,000)
 ├── hard_negative_normal.csv               # Hard Negative 합성 데이터 (200건)
-└── venv/                                  # Python 가상환경
+└── synthetic_normal_combined.csv          # 합성 일반 대화 통합본 (1,200건)
 ```
 
 ## 핵심 발견
@@ -68,6 +65,13 @@ DLthon/
 1. **Train/Test 포맷 불일치**: Train 100% `\n` 구분 vs Test 4.8%만 `\n` → 전처리 정규화 필수
 2. **합성 데이터 도메인 갭**: 양/길이 확대로는 해결 안 됨 → 구조적 특성(권력 관계, 감정 흐름) 매칭 필요
 3. **4축 분석 프레임워크**: 발화 대칭성, 존댓말 비대칭, 에스컬레이션, 굴복/대등 비율로 위협-일반 차이 정량화
+
+## Data-Centric Strategy
+
+- **전처리**: 중복 제거(104건) + `\n` → 공백 정규화
+- **증강**: 핵심 키워드 보존 동의어 교체 + 패러프레이즈 (문장 셔플은 에스컬레이션 패턴 파괴로 제외)
+- **합성**: 4축 구조 분석 기반 일반 대화 생성 (docs/synthetic/ 참고)
+- **Hard Negative**: 위협 빈출 키워드를 무해한 문맥에 배치
 
 ## Ablation Study
 
