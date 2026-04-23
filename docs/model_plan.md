@@ -434,20 +434,59 @@ print(submission['class'].value_counts())
 
 ---
 
-## 8. Ablation Study 실험 로그 (템플릿)
+## 8. Ablation Study 실험 로그
 
-| Exp | 변수 | 조건 | Val F1 | 비고 |
-|---|---|---|---|---|
-| **Baseline** | - | KLUE-RoBERTa-base, MAX_LEN=256, BS=32, LR=2e-5 | - | 기준선 |
-| **Exp-A1** | MAX_LEN | 128 / 256 / 512 | - | 성능 vs 속도 비교 |
-| **Exp-A2** | Dropout | 0.1 / 0.3 / 0.5 | - | 과적합 정도에 따라 |
-| **Exp-A3** | 전처리 | `\n` → `[SEP]` vs `\n` → 공백 vs 원문 유지 | - | 발화 구분 방식 비교 |
-| **Exp-A4** | 손실 함수 | CE vs Focal Loss vs Label Smoothing | - | 유사 클래스 혼동 시 |
-| **Exp-A5** | 모델 | RoBERTa vs KoELECTRA | - | 모델 비교 |
+### 완료된 실험 (B01~B02)
+
+| ID | 변수 | 조건 | Val F1 | Test 일반대화 | 교훈 |
+|---|---|---|---|---|---|
+| B01 | Baseline | KcELECTRA, 합성 694건, max_len=128 | 0.922 | 34건 | 기준선 |
+| S01 | 합성 길이 | 합성 700건 (avg 206자) | 0.922 | 35건 | 길이 개선 효과 없음 |
+| S02 | 합성 양 | 합성 1,200건 | 0.921 | 38건 | 양 확대 미미한 효과 |
+| S02b | MAX_LEN | 128 → 256 | 0.937 | — | +1.6%p, max_len=256 확정 |
+| B02 | 대규모 증강 | 15k 균형, 경량 EDA 증강 | 0.990 | 23건 | 문체 숏컷 과적합 |
+
+### 예정 실험
+
+| ID | 변수 | 조건 | 비고 |
+|---|---|---|---|
+| **B04** | v2 전략 데이터 | baseline_B04.csv (gem_prompt_v2 기반 15k) | strategy_v2.md |
+| Exp-A1 | MAX_LEN | 256 / 384 / 512 | S02b에서 256 효과 확인. 추가 실험 |
+| Exp-A2 | Dropout | 0.1 / 0.3 / 0.5 | — |
+| Exp-A3 | 전처리 | `\n` → 공백 (확정) vs `[TURN]` special token | v1에서 공백 확정. [TURN] 추가 실험 |
+| Exp-A4 | 손실 함수 | CE vs Focal Loss vs Label Smoothing | 협박↔기타괴롭힘 유사도 0.87 |
+| Exp-A5 | 모델 비교 | KcELECTRA vs KLUE-RoBERTa vs KcBERT | 앙상블 후보 확보 |
+| Exp-A6 | 풀링 | [CLS] vs Mean Pooling vs Attention Pooling | 후반부 위협 패턴 포착 |
+| E01 | 앙상블 | 상위 2~3 모델 soft voting | — |
+
+### 실험 우선순위 (시간 제한 시)
+
+```
+필수: B04 (v2 데이터), Exp-A5 (모델 비교)
+권장: Exp-A4 (손실 함수), Exp-A1 (MAX_LEN 확장)
+선택: Exp-A6 (풀링), Exp-A3 ([TURN] 토큰), E01 (앙상블)
+```
+
+### 핵심 교훈 (실험에서 확인됨)
+
+1. **Val F1을 맹신하지 말 것** — B02: Val 0.990이지만 Test 일반대화 23건
+2. **max_len=256 이상 사용** — S02b에서 +1.6%p 확인
+3. **과잉 증강 주의** — ×3.4 증강이 오히려 역효과 (B02 vs S02)
+4. **MPS 대신 CPU 사용** — Apple Silicon MPS 속도 이슈 (스텝당 30초 vs CPU 1.1초)
+5. **save_total_limit 설정 필수** — 체크포인트 17GB 누적으로 디스크 풀 사고
+
+## 9. Cross-Validation 전략
+
+| 방식 | 설정 | 용도 |
+|---|---|---|
+| **단순 분할** | train_test_split(test_size=0.15, stratify) | 빠른 반복 실험 |
+| **Stratified 5-Fold** | StratifiedKFold(n_splits=5, shuffle=True) | 최종 성능 평가 |
+
+> 검증셋에 증강 데이터가 섞이면 안 됨 (strategy_v2.md 5-0 참고)
 
 ---
 
-## 9. 노트북 셀 구성 (model.ipynb)
+## 10. 노트북 셀 구성 (model.ipynb)
 
 | 셀 번호 | 내용 | 비고 |
 |---|---|---|
@@ -464,7 +503,7 @@ print(submission['class'].value_counts())
 
 ---
 
-## 10. 체크리스트 (DLThon.md 평가항목 매핑)
+## 11. 체크리스트 (DLThon.md 평가항목 매핑)
 
 | 평가 항목 | 이 계획서에서의 대응 |
 |---|---|

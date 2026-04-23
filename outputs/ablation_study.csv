@@ -4,4 +4,5 @@ S01,beomi/KcELECTRA-base,700.0,,2e-05,7,128,0.9221218608443074,0.917888563049853
 S02,beomi/KcELECTRA-base,1200.0,,2e-05,7,128,0.9209490646097612,0.9247027741083224,1200 synthetic combined + max_len=128,
 S02,beomi/KcELECTRA-base,1200.0,,2e-05,7,128,0.9209490646097612,0.9247027741083224,1200 synthetic combined + save_limit=2,
 S02,beomi/KcELECTRA-base,1200.0,,2e-05,7,256,0.9368548483881554,0.940554821664465,v3: 1200 synthetic + max_len=256,
-B02,beomi/KcELECTRA-base,,경량EDA(삭제+스왑+구두점),2e-05,7,256,0.9902285457391391,0.9902222222222222,"baseline.csv v2 - 이모티콘 제거, 경량 증강","baseline.csv (v2, 15000건)"
+B02,beomi/KcELECTRA-base,,경량EDA(삭제+스왑+구두점),2e-05,7,256,0.9902285457391392,0.9902222222222222,"baseline.csv v2 - 이모티콘 제거, 경량 증강","baseline.csv (v2, 15000건)"
+B03,beomi/KcELECTRA-base,3000.0,경량EDA + 문체보정 + label_smoothing=0.1,2e-05,7,256,0.9911098534509444,0.9911111111111112,"숏컷 해소: 합성 일반 마침표/존댓말 보정, label smoothing 0.1","15,000건 (5×3,000, 문체 보정 + label smoothing)"

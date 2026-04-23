@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[DLThon] B03 심층 분석 — 일반대화 32건의 원인</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e17;--card:#1a2332;--card2:#141e2d;--border:#2a3545;--text:#e2e8f0;--text2:#8892a4;--cyan:#06b6d4;--yellow:#f59e0b;--red:#ef4444;--blue:#3b82f6;--green:#10b981;--purple:#a78bfa}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.7;padding:40px 20px}
+.container{max-width:880px;margin:0 auto}
+h1{font-size:26px;font-weight:700;color:var(--cyan);margin-bottom:6px}
+h2{font-size:19px;font-weight:600;color:var(--cyan);margin:36px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+h3{font-size:15px;font-weight:600;color:var(--yellow);margin:20px 0 10px}
+.sub{color:var(--text2);font-size:13px;margin-bottom:28px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;margin:14px 0}
+.card2{background:var(--card2);border-radius:8px;padding:14px;margin:10px 0}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
+th{background:var(--card2);color:var(--cyan);font-weight:600;text-align:left;padding:8px 10px;border-bottom:2px solid var(--border)}
+td{padding:7px 10px;border-bottom:1px solid var(--border)}
+.mono{font-family:'JetBrains Mono',monospace;font-size:13px}
+.green{color:var(--green)}.red{color:var(--red)}.yellow{color:var(--yellow)}.cyan{color:var(--cyan)}.blue{color:var(--blue)}.purple{color:var(--purple)}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;margin:2px}
+.tag-red{background:rgba(239,68,68,0.15);color:var(--red)}
+.tag-green{background:rgba(16,185,129,0.15);color:var(--green)}
+.tag-yellow{background:rgba(245,158,11,0.15);color:var(--yellow)}
+.tag-blue{background:rgba(59,130,246,0.15);color:var(--blue)}
+.tag-purple{background:rgba(167,139,250,0.15);color:var(--purple)}
+.insight{border-left:3px solid var(--yellow);padding:10px 14px;margin:12px 0;background:rgba(245,158,11,0.05);border-radius:0 8px 8px 0}
+.danger{border-left:3px solid var(--red);padding:10px 14px;margin:12px 0;background:rgba(239,68,68,0.05);border-radius:0 8px 8px 0}
+.ok{border-left:3px solid var(--green);padding:10px 14px;margin:12px 0;background:rgba(16,185,129,0.05);border-radius:0 8px 8px 0}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:14px 0}
+.metric-box{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.metric-box .value{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700}
+.metric-box .label{color:var(--text2);font-size:11px;margin-top:4px}
+.quote{background:var(--card2);border-radius:8px;padding:12px 16px;margin:8px 0;font-size:13px;border-left:3px solid var(--border)}
+.quote .src{color:var(--text2);font-size:11px;margin-top:4px}
+.bar{height:8px;border-radius:4px;margin:4px 0}
+.flow{text-align:center;font-size:13px;margin:12px 0;color:var(--text2)}
+.flow .arrow{color:var(--cyan);margin:0 6px}
+code{font-family:'JetBrains Mono',monospace;background:var(--card2);padding:1px 5px;border-radius:3px;font-size:12px}
+.footer{text-align:center;color:var(--text2);font-size:12px;margin-top:40px;padding-top:20px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>[DLThon] B03 심층 분석 리포트</h1>
+<p class="sub">팀 중간 공유 &nbsp;|&nbsp; 2026-04-23 &nbsp;|&nbsp; "모델이 일반대화를 32건만 찾는 이유"</p>
+
+<!-- ====== B02 → B03 비교 ====== -->
+<h2>1. B02 → B03 실험 비교</h2>
+<div class="card">
+  <table>
+    <tr><th></th><th>B02</th><th>B03</th><th>변화</th></tr>
+    <tr><td>전략</td><td>이모티콘 제거</td><td>+ <strong>문체 보정 + Label Smoothing 0.1</strong></td><td></td></tr>
+    <tr><td>데이터</td><td>15,000건 (5×3,000)</td><td>15,000건 (5×3,000)</td><td>동일</td></tr>
+    <tr><td>합성 일반 마침표</td><td class="mono">0.38개</td><td class="mono green">3.0개</td><td>×8 개선</td></tr>
+    <tr><td>합성 일반 존댓말</td><td class="mono">0.83회</td><td class="mono green">1.4회</td><td>×1.7 개선</td></tr>
+    <tr><td>Val F1</td><td class="mono">0.9902</td><td class="mono green">0.9911</td><td>+0.09%p</td></tr>
+    <tr><td><strong>Test 일반대화 예측</strong></td><td class="mono red">23건</td><td class="mono yellow">32건</td><td><strong>+9건 (+39%)</strong></td></tr>
+  </table>
+  <div class="insight">문체 보정으로 일반대화 탐지가 23→32건 개선. 하지만 예상 ~100건 대비 여전히 부족. 원인을 깊이 분석합니다.</div>
+</div>
+
+<!-- ====== 에폭별 학습 추이 ====== -->
+<h2>2. B03 학습 추이 (7 Epochs)</h2>
+<div class="card">
+  <table>
+    <tr><th>Epoch</th><th>Train Loss</th><th>Val Loss</th><th>Val F1</th><th>비고</th></tr>
+    <tr><td>1</td><td class="mono">0.4750</td><td class="mono">0.5355</td><td class="mono">0.9427</td><td></td></tr>
+    <tr><td>2</td><td class="mono">0.4164</td><td class="mono">0.4442</td><td class="mono">0.9809</td><td>큰 폭 개선</td></tr>
+    <tr><td>3</td><td class="mono">0.4063</td><td class="mono">0.4367</td><td class="mono">0.9849</td><td></td></tr>
+    <tr><td>4</td><td class="mono">0.3969</td><td class="mono">0.4268</td><td class="mono">0.9876</td><td></td></tr>
+    <tr><td>5</td><td class="mono">0.3945</td><td class="mono">0.4212</td><td class="mono">0.9907</td><td></td></tr>
+    <tr><td>6</td><td class="mono">—</td><td class="mono">0.4198</td><td class="mono">0.9907</td><td>수렴</td></tr>
+    <tr style="background:rgba(16,185,129,0.08)"><td><strong>7</strong></td><td class="mono">—</td><td class="mono"><strong>0.4189</strong></td><td class="mono green"><strong>0.9911</strong></td><td>Best</td></tr>
+  </table>
+  <div class="ok">Val Loss가 매 에폭 감소 — EarlyStopping 미발동, 과적합 없이 7에폭 완주. Label Smoothing이 loss를 높게 유지하면서 일반화에 기여.</div>
+</div>
+
+<!-- ====== 클래스별 성능 ====== -->
+<h2>3. 클래스별 Validation 성능</h2>
+<div class="card">
+  <table>
+    <tr><th>클래스</th><th>Precision</th><th>Recall</th><th>F1</th><th>Support</th></tr>
+    <tr><td>갈취 대화</td><td class="mono">0.9866</td><td class="mono">0.9800</td><td class="mono">0.9833</td><td class="mono">450</td></tr>
+    <tr><td>기타 괴롭힘</td><td class="mono">0.9977</td><td class="mono">0.9844</td><td class="mono">0.9911</td><td class="mono">450</td></tr>
+    <tr><td style="color:var(--green);font-weight:600">일반 대화</td><td class="mono green">1.0000</td><td class="mono green">1.0000</td><td class="mono green">1.0000</td><td class="mono">450</td></tr>
+    <tr><td>직장 내 괴롭힘</td><td class="mono">0.9912</td><td class="mono">0.9956</td><td class="mono">0.9933</td><td class="mono">450</td></tr>
+    <tr><td>협박 대화</td><td class="mono">0.9803</td><td class="mono">0.9956</td><td class="mono">0.9879</td><td class="mono">450</td></tr>
+    <tr style="border-top:2px solid var(--cyan)"><td><strong>Macro Avg</strong></td><td></td><td></td><td class="mono green" style="font-weight:700"><strong>0.9911</strong></td><td class="mono">2,250</td></tr>
+  </table>
+  <div class="danger">Val에서 일반대화 F1 = 1.000 (완벽). 그러나 Test에서는 32건만 예측 → <strong>Val과 Test의 괴리가 핵심 문제</strong>.</div>
+</div>
+
+<!-- ====== 핵심: 심층 분석 ====== -->
+<h2>4. 핵심 분석 — 모델은 어디서 막히고 있나?</h2>
+
+<div class="card">
+  <h3 style="margin-top:0">Softmax 확률 분포 — 모델의 "시야"</h3>
+  <div class="metric-grid">
+    <div class="metric-box"><div class="value red">92%</div><div class="label">일반확률 5% 미만 (462건)</div></div>
+    <div class="metric-box"><div class="value yellow">6건</div><div class="label">경계 사례 (5~50%)</div></div>
+    <div class="metric-box"><div class="value green">32건</div><div class="label">일반으로 분류 (>50%)</div></div>
+  </div>
+  <div class="danger">
+    500건 중 <strong>462건(92%)</strong>에 대해 모델은 일반대화 가능성을 5% 미만으로 판단. 모델의 결정 경계가 <strong>극단적으로 위협 쪽으로 치우쳐 있음</strong>.
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">경계 사례 6건 — 모델이 유일하게 고민한 텍스트</h3>
+  <p style="color:var(--text2);font-size:13px;margin-bottom:12px">임계값 조정으로 일반으로 뒤집을 수 있는 후보들</p>
+
+  <div class="quote">
+    <strong class="yellow">t_090</strong> → 협박 (일반확률 38.4%, 확신도 53.2%)
+    <p>"좋은 아침... 일 폭탄으로 누구 <strong class="red">죽일</strong> 수 있어"</p>
+    <p class="src">실제: 업무 스트레스 비유 표현. "죽일"에 과민 반응.</p>
+  </div>
+
+  <div class="quote">
+    <strong class="yellow">t_268</strong> → 직장괴롭힘 (일반확률 30.0%, 확신도 38.9%)
+    <p>"짐은 다 뺐니 택배로 부쳤어요 잘했다 삼촌..."</p>
+    <p class="src">실제: 이사/가족 대화. 상하관계 말투를 괴롭힘으로 오인.</p>
+  </div>
+
+  <div class="quote">
+    <strong class="yellow">t_082</strong> → 협박 (일반확률 16.1%, 확신도 38.8%)
+    <p>"천안 두정동 제이빌라, 지금 <strong class="red">화재</strong>가 발생했어요. 119 소방대를 보내겠습니다"</p>
+    <p class="src">실제: 119 신고 대화. 긴급 키워드를 위협으로 오인.</p>
+  </div>
+
+  <div class="quote">
+    <strong class="yellow">t_274</strong> → 갈취 (일반확률 9.5%, 확신도 78.7%)
+    <p>"지갑을 잃어버렸다 현금 안 가져 왔어 <strong class="red">15만원</strong>"</p>
+    <p class="src">실제: 분실물 대화. "돈" 맥락을 갈취로 오인.</p>
+  </div>
+
+  <div class="quote">
+    <strong class="yellow">t_221</strong> → 기타괴롭힘 (일반확률 7.7%, 확신도 43.0%)
+    <p>"좋은 아침입니다. <strong class="red">이동진 대표님</strong>. 회의는 언제 시작해?"</p>
+    <p class="src">실제: 정상 직장 인사. 존댓말+직장 맥락을 괴롭힘으로 오인.</p>
+  </div>
+</div>
+
+<!-- ====== 3가지 패턴 ====== -->
+<div class="card">
+  <h3 style="margin-top:0;color:var(--red)">모델이 실패하는 3가지 패턴</h3>
+
+  <div class="card2">
+    <p><span class="tag tag-red">패턴 A</span> <strong>비유적 위협 표현</strong></p>
+    <p style="font-size:13px">"일 때문에 <strong class="red">죽겠다</strong>", "시험 <strong class="red">폭탄</strong>", "<strong class="red">죽일</strong> 맛이야"</p>
+    <p style="font-size:12px;color:var(--text2);margin-top:4px">→ 모델: "죽" "폭탄" 키워드 감지 → 협박으로 분류</p>
+    <p style="font-size:12px;color:var(--text2)">→ 실제: 일상적 과장 표현, 위협 아님</p>
+    <p style="font-size:12px;color:var(--yellow);margin-top:4px"><strong>합성 데이터에 없는 유형</strong></p>
+  </div>
+
+  <div class="card2">
+    <p><span class="tag tag-purple">패턴 B</span> <strong>신고 / 긴급 상황 대화</strong></p>
+    <p style="font-size:13px">"<strong class="red">화재</strong> 발생... 119", "<strong class="red">시신</strong> 발견... 영흥도", "옥상에서 <strong class="red">떨어졌어요</strong>"</p>
+    <p style="font-size:12px;color:var(--text2);margin-top:4px">→ 모델: 위기 키워드 감지 → 협박/괴롭힘으로 분류</p>
+    <p style="font-size:12px;color:var(--text2)">→ 실제: 119/112 신고 대화, 위협이 아닌 구조 요청</p>
+    <p style="font-size:12px;color:var(--yellow);margin-top:4px"><strong>합성 데이터에 전혀 없는 유형</strong></p>
+  </div>
+
+  <div class="card2">
+    <p><span class="tag tag-blue">패턴 C</span> <strong>돈 / 직장 맥락 일상 대화</strong></p>
+    <p style="font-size:13px">"<strong class="red">지갑</strong> 잃어버렸다 <strong class="red">15만원</strong>", "좋은 아침입니다 <strong class="red">대표님</strong>", "<strong class="red">카드값</strong>이 밀렸어"</p>
+    <p style="font-size:12px;color:var(--text2);margin-top:4px">→ 모델: 돈+직장 키워드 → 갈취/괴롭힘 숏컷</p>
+    <p style="font-size:12px;color:var(--text2)">→ 실제: 일상적인 금전/직장 대화</p>
+    <p style="font-size:12px;color:var(--yellow);margin-top:4px"><strong>Hard Negative가 부족한 영역</strong></p>
+  </div>
+</div>
+
+<!-- ====== 충격적 수치 ====== -->
+<div class="card">
+  <h3 style="margin-top:0">충격적 수치: 위협 키워드 없는데 위협으로 분류</h3>
+  <div class="metric-grid" style="grid-template-columns:1fr 1fr">
+    <div class="metric-box"><div class="value red">239건</div><div class="label">위협 키워드 없이 위협 분류 (468건 중)</div></div>
+    <div class="metric-box"><div class="value red">51%</div><div class="label">키워드가 아닌 문체로 분류</div></div>
+  </div>
+  <div class="danger">
+    위협으로 분류된 468건 중 <strong>절반 이상(239건)</strong>이 명시적 위협 키워드 없이 분류됨. 모델이 "대화 내용"이 아니라 여전히 <strong>"문체적 특성"(마침표, 존댓말, 길이)</strong>에 의존하고 있다는 증거.
+  </div>
+</div>
+
+<!-- ====== Ablation 전체 추이 ====== -->
+<h2>5. 전체 실험 추이</h2>
+<div class="card">
+  <table>
+    <tr><th>ID</th><th>핵심 변경</th><th>Val F1</th><th>Test 일반</th></tr>
+    <tr><td>B01</td><td>초기 baseline (합성 694건)</td><td class="mono">0.922</td><td class="mono">34건</td></tr>
+    <tr><td>S01</td><td>합성 길이 개선</td><td class="mono">0.922</td><td class="mono">35건</td></tr>
+    <tr><td>S02</td><td>합성 1,200건</td><td class="mono">0.921</td><td class="mono">38건</td></tr>
+    <tr><td>S02b</td><td>MAX_LEN 256</td><td class="mono">0.937</td><td class="mono">—</td></tr>
+    <tr><td>B02</td><td>15,000건 + 이모티콘 제거</td><td class="mono">0.990</td><td class="mono red">23건 ↓</td></tr>
+    <tr style="background:rgba(16,185,129,0.08)"><td><strong>B03</strong></td><td><strong>문체 보정 + Label Smoothing</strong></td><td class="mono green"><strong>0.991</strong></td><td class="mono yellow"><strong>32건</strong></td></tr>
+  </table>
+  <div class="insight">
+    <strong>패턴</strong>: Val F1이 높을수록 Test 일반대화 예측이 오히려 줄어드는 역설. B02(Val 0.990)에서 23건으로 최저 → B03에서 문체 보정으로 32건 회복. Val 성능이 아닌 <strong>데이터 분포 일치도</strong>가 실제 성능을 결정.
+  </div>
+</div>
+
+<!-- ====== 다음 단계 ====== -->
+<h2>6. 다음 단계 — 개선 방향</h2>
+<div class="card">
+  <table>
+    <tr><th>#</th><th>방향</th><th>구체적 행동</th><th>기대</th></tr>
+    <tr>
+      <td><span class="tag tag-red">1</span></td>
+      <td><strong>신고/긴급 대화 추가</strong></td>
+      <td>119 신고, 사건 접수, 응급 상황 대화 50~100건 합성</td>
+      <td>패턴 B 해결</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-red">2</span></td>
+      <td><strong>비유적 위협 Hard Negative</strong></td>
+      <td>"죽겠다(피곤)", "시험 폭탄", "배터지게 먹자" 등 50건</td>
+      <td>패턴 A 해결</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-red">3</span></td>
+      <td><strong>돈/직장 Hard Negative 추가</strong></td>
+      <td>"지갑 분실", "월급날", "대표님 인사" 등 50건</td>
+      <td>패턴 C 해결</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-yellow">4</span></td>
+      <td><strong>증강 비율 축소</strong></td>
+      <td>×3.4 → ×1.5 (위협 과적합 완화)</td>
+      <td>결정 경계 균형</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-yellow">5</span></td>
+      <td><strong>Label Smoothing 강화</strong></td>
+      <td>0.1 → 0.2 (과신 억제)</td>
+      <td>경계 사례 증가</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-blue">6</span></td>
+      <td><strong>Confidence Threshold</strong></td>
+      <td>max_prob &lt; 0.7이면 2순위 클래스 고려</td>
+      <td>경계 6건 전환</td>
+    </tr>
+  </table>
+
+  <div class="insight">
+    <strong>핵심 메시지</strong>: 모델 아키텍처나 하이퍼파라미터 튜닝보다 <strong>합성 데이터의 도메인 다양성</strong>이 가장 큰 병목. 특히 신고 대화, 비유적 표현, 돈/직장 일상 대화를 합성 데이터에 추가하는 것이 최우선 과제.
+  </div>
+</div>
+
+<div class="footer">
+  DLThon — B03 심층 분석 리포트 &nbsp;|&nbsp; 2026-04-23 &nbsp;|&nbsp; 팀 중간 공유
+</div>
+
+</div>
+</body>
+</html>
