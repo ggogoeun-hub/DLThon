@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[DLThon] 대화 위협 분류 — 중간 보고서</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e17;
+  --card: #1a2332;
+  --card2: #141e2d;
+  --border: #2a3545;
+  --text: #e2e8f0;
+  --text2: #8892a4;
+  --cyan: #06b6d4;
+  --yellow: #f59e0b;
+  --red: #ef4444;
+  --blue: #3b82f6;
+  --green: #10b981;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; line-height:1.7; padding:40px 20px; }
+.container { max-width:880px; margin:0 auto; }
+h1 { font-size:28px; font-weight:700; color:var(--cyan); margin-bottom:8px; }
+h2 { font-size:20px; font-weight:600; color:var(--cyan); margin:36px 0 16px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+h3 { font-size:16px; font-weight:600; color:var(--yellow); margin:24px 0 12px; }
+.subtitle { color:var(--text2); font-size:14px; margin-bottom:32px; }
+.card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:24px; margin:16px 0; }
+.card-inner { background:var(--card2); border-radius:8px; padding:16px; margin:12px 0; }
+.metric-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin:16px 0; }
+.metric-box { background:var(--card2); border:1px solid var(--border); border-radius:10px; padding:20px; text-align:center; }
+.metric-box .value { font-family:'JetBrains Mono',monospace; font-size:32px; font-weight:700; }
+.metric-box .label { color:var(--text2); font-size:12px; margin-top:4px; }
+.green { color:var(--green); }
+.red { color:var(--red); }
+.yellow { color:var(--yellow); }
+.cyan { color:var(--cyan); }
+.blue { color:var(--blue); }
+table { width:100%; border-collapse:collapse; margin:12px 0; font-size:14px; }
+th { background:var(--card2); color:var(--cyan); font-weight:600; text-align:left; padding:10px 12px; border-bottom:2px solid var(--border); }
+td { padding:8px 12px; border-bottom:1px solid var(--border); }
+tr:hover td { background:rgba(6,182,212,0.05); }
+.mono { font-family:'JetBrains Mono',monospace; font-size:13px; }
+.tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600; margin:2px; }
+.tag-red { background:rgba(239,68,68,0.15); color:var(--red); }
+.tag-green { background:rgba(16,185,129,0.15); color:var(--green); }
+.tag-yellow { background:rgba(245,158,11,0.15); color:var(--yellow); }
+.tag-blue { background:rgba(59,130,246,0.15); color:var(--blue); }
+.flow-arrow { color:var(--cyan); margin:0 8px; }
+.timeline { position:relative; padding-left:28px; }
+.timeline::before { content:''; position:absolute; left:8px; top:4px; bottom:4px; width:2px; background:var(--border); }
+.timeline-item { position:relative; margin:20px 0; }
+.timeline-item::before { content:''; position:absolute; left:-24px; top:6px; width:12px; height:12px; border-radius:50%; border:2px solid var(--cyan); background:var(--bg); }
+.timeline-item.done::before { background:var(--green); border-color:var(--green); }
+.timeline-item.issue::before { background:var(--red); border-color:var(--red); }
+.cm-table td { text-align:center; font-family:'JetBrains Mono',monospace; min-width:50px; }
+.cm-table td.diag { background:rgba(16,185,129,0.12); font-weight:700; color:var(--green); }
+.cm-table td.error { color:var(--red); font-weight:600; }
+.insight-box { border-left:3px solid var(--yellow); padding:12px 16px; margin:12px 0; background:rgba(245,158,11,0.05); border-radius:0 8px 8px 0; }
+.section-num { color:var(--text2); font-size:13px; font-weight:400; }
+blockquote { border-left:3px solid var(--border); padding:8px 16px; margin:12px 0; color:var(--text2); font-style:italic; }
+code { font-family:'JetBrains Mono',monospace; background:var(--card2); padding:2px 6px; border-radius:4px; font-size:13px; }
+.footer { text-align:center; color:var(--text2); font-size:12px; margin-top:48px; padding-top:24px; border-top:1px solid var(--border); }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ====== HEADER ====== -->
+<h1>[DLThon] 대화 위협 분류 — 중간 보고서</h1>
+<p class="subtitle">DKTC 5-Class Conversation Threat Classification &nbsp;|&nbsp; 2026-04-23 &nbsp;|&nbsp; 팀 중간 발표용</p>
+
+<div class="metric-grid">
+  <div class="metric-box"><div class="value green">99.02%</div><div class="label">Validation Macro F1</div></div>
+  <div class="metric-box"><div class="value cyan">15,000</div><div class="label">학습 데이터 (5 × 3,000)</div></div>
+  <div class="metric-box"><div class="value yellow">5h 5m</div><div class="label">학습 소요 시간</div></div>
+  <div class="metric-box"><div class="value blue">KcELECTRA</div><div class="label">베이스 모델</div></div>
+</div>
+
+<!-- ====== 1. 프로젝트 개요 ====== -->
+<h2><span class="section-num">01</span> 프로젝트 개요</h2>
+<div class="card">
+  <p>한국어 대화를 <strong>5개 클래스</strong>로 분류하는 텍스트 분류 과제입니다.</p>
+  <table>
+    <tr><th>클래스</th><th>설명</th><th>데이터 출처</th></tr>
+    <tr><td>협박 대화</td><td>생명·신체 위협</td><td>원본 (Augmentation만 허용)</td></tr>
+    <tr><td>갈취 대화</td><td>금전·물품 갈취</td><td>원본 (Augmentation만 허용)</td></tr>
+    <tr><td>직장 내 괴롭힘</td><td>직장 내 권력 비대칭 괴롭힘</td><td>원본 (Augmentation만 허용)</td></tr>
+    <tr><td>기타 괴롭힘</td><td>학교·일상 등 기타 괴롭힘</td><td>원본 (Augmentation만 허용)</td></tr>
+    <tr><td><span class="green">일반 대화</span></td><td>위협 없는 일상 대화</td><td><span class="tag tag-yellow">합성 데이터로만 구성</span></td></tr>
+  </table>
+  <div class="insight-box">
+    <strong>핵심 제약</strong>: 위협 4클래스는 Augmentation만 허용, 일반 대화는 합성 데이터로만 구성. 평가 지표는 <strong>Macro F1 Score</strong>.
+  </div>
+</div>
+
+<!-- ====== 2. 논리 전개 과정 ====== -->
+<h2><span class="section-num">02</span> 논리 전개 과정 — 전체 흐름</h2>
+<div class="card">
+  <p style="text-align:center; font-size:14px; margin:8px 0 16px;">
+    <span class="tag tag-blue">팀원 코드 리뷰</span>
+    <span class="flow-arrow">→</span>
+    <span class="tag tag-yellow">전략 문서 통합</span>
+    <span class="flow-arrow">→</span>
+    <span class="tag tag-green">데이터 구축</span>
+    <span class="flow-arrow">→</span>
+    <span class="tag tag-red">품질 검증</span>
+    <span class="flow-arrow">→</span>
+    <span class="tag tag-blue">구조 검증</span>
+    <span class="flow-arrow">→</span>
+    <span class="tag tag-green">모델 학습</span>
+  </p>
+
+  <div class="timeline">
+    <div class="timeline-item done">
+      <h3 style="margin-top:0">Step 1. 팀원 GitHub 코드 리뷰</h3>
+      <p>팀원(seongyeon-h)의 DLThon 리포를 전수 검토. EDA 프레임워크(13개 지표), Hard Negative 전략, strategy.md의 근거 기반 설계를 높이 평가하면서 <strong>6개 개선 사항</strong>을 도출했습니다.</p>
+      <div class="card-inner">
+        <strong>발견된 주요 이슈:</strong>
+        <ul style="margin:8px 0; padding-left:20px;">
+          <li><span class="red">문장 셔플 증강이 EDA 결론과 모순</span> — 에스칼레이션 패턴 파괴</li>
+          <li>증강/합성 구현 코드 부재 (전략만 있고 코드 없음)</li>
+          <li><code>[SEP]</code> 토큰 충돌 우려</li>
+          <li>MAX_LEN=256에서 25% 데이터 잘림</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="timeline-item done">
+      <h3 style="margin-top:0">Step 2. 전략 문서 통합 (strategy_v1.md)</h3>
+      <p>팀원의 <code>strategy.md</code> 원본 + 리뷰 피드백 + <code>v2참고.md</code> 전략을 병합하여 통합 전략 문서를 작성했습니다.</p>
+      <div class="card-inner">
+        <strong>v1 핵심 변경점:</strong>
+        <table>
+          <tr><th>항목</th><th>원본</th><th>v1</th><th>사유</th></tr>
+          <tr><td>문장 셔플</td><td>✅ 포함</td><td class="red">❌ 삭제</td><td>EDA [6-2] 에스칬레이션 패턴과 모순</td></tr>
+          <tr><td>검증셋 격리</td><td>없음</td><td class="green">✅ 추가</td><td>증강 전 분리 — 데이터 오염 방지</td></tr>
+          <tr><td>발화 대칭성</td><td>없음</td><td class="green">✅ 추가</td><td>위협(비대칭) vs 일반(대칭) 차별화</td></tr>
+          <tr><td>화법 대칭</td><td>없음</td><td class="green">✅ 추가</td><td>권력 비대칭 제거</td></tr>
+          <tr><td>복합 증강</td><td>개별만</td><td class="green">✅ 추가</td><td>×3.7 목표 달성 필수</td></tr>
+          <tr><td>증강 목표</td><td>×1.3</td><td class="yellow">×3.7</td><td>클래스당 3,000건 확정</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="timeline-item done">
+      <h3 style="margin-top:0">Step 3. baseline.csv 데이터 구축</h3>
+      <p>전략 문서 기반으로 <strong>15,000건</strong>(5클래스 × 3,000건) 데이터셋을 구축했습니다.</p>
+      <div class="card-inner">
+        <table>
+          <tr><th>구분</th><th>원본</th><th>증강/합성</th><th>최종</th></tr>
+          <tr><td>협박 대화</td><td class="mono">892</td><td class="mono">+2,108</td><td class="mono green">3,000</td></tr>
+          <tr><td>갈취 대화</td><td class="mono">973</td><td class="mono">+2,027</td><td class="mono green">3,000</td></tr>
+          <tr><td>직장 내 괴롭힘</td><td class="mono">970</td><td class="mono">+2,030</td><td class="mono green">3,000</td></tr>
+          <tr><td>기타 괴롭힘</td><td class="mono">1,011</td><td class="mono">+1,989</td><td class="mono green">3,000</td></tr>
+          <tr><td>일반 대화</td><td class="mono">—</td><td class="mono">3,000 (합성)</td><td class="mono green">3,000</td></tr>
+        </table>
+        <p style="margin-top:8px; font-size:13px; color:var(--text2);">위협 4클래스: 경량 EDA 증강 (랜덤 삭제 + 스왑 + 구두점 변형 + 복합)<br>일반 대화: 기존 합성 CSV 5종 병합 + 이모티콘 정제 + 부족분 증강</p>
+      </div>
+    </div>
+
+    <div class="timeline-item issue">
+      <h3 style="margin-top:0">Step 4. 품질 검증 — 이모티콘 숏컷 발견</h3>
+      <p>12개 항목 교차 검증 중 <strong>치명적 문제</strong>를 발견하여 전면 재구축했습니다.</p>
+      <div class="card-inner">
+        <strong>v1 → v2 정밀 수정:</strong>
+        <table>
+          <tr><th>검증 항목</th><th>v1 결과</th><th>v2 결과</th></tr>
+          <tr><td>이모티콘 (ㅋㅋ/ㅎㅎ)</td><td class="red">42.6% 포함 🔴</td><td class="green">0.0% ✅</td></tr>
+          <tr><td>일반대화 길이</td><td class="mono">161±50자</td><td class="mono green">174±42자</td></tr>
+          <tr><td>증강 문장 품질</td><td class="red">비문 다수 🔴</td><td class="green">자연스러움 ✅</td></tr>
+          <tr><td>금지어/비속어</td><td class="green">0건 ✅</td><td class="green">0건 ✅</td></tr>
+          <tr><td>원본 보존</td><td class="green">100% ✅</td><td class="green">100% ✅</td></tr>
+          <tr><td>중복</td><td class="green">0건 ✅</td><td class="green">0건 ✅</td></tr>
+        </table>
+      </div>
+      <div class="insight-box">
+        <strong>왜 치명적이었나?</strong> 원본 위협 데이터에는 이모티콘이 <strong>0건</strong>인데 일반 대화에만 42.6% 포함. 모델이 "ㅋㅋ 있으면 일반 대화"로 숏컷 학습하여 <strong>test에서 성능 급락</strong>할 위험. v1의 경량 증강도 랜덤 삽입/동의어 교체가 한국어에서 비문을 생성하여 삭제+스왑만 남기는 방식으로 변경.
+      </div>
+    </div>
+
+    <div class="timeline-item issue">
+      <h3 style="margin-top:0">Step 5. Train-Test 구조 검증 — 개행문자 엣지</h3>
+      <p>test 데이터와 train 데이터의 <strong>물리적 구조가 다르다</strong>는 사실을 발견했습니다.</p>
+      <div class="card-inner">
+        <table>
+          <tr><th></th><th>train (원본)</th><th>test</th></tr>
+          <tr><td>턴 구분</td><td><code>\n</code> (줄바꿈)</td><td class="red">공백 (줄바꿈 없음)</td></tr>
+          <tr><td>줄바꿈 포함률</td><td class="mono">100%</td><td class="mono red">4.8%</td></tr>
+          <tr><td>평균 턴 수</td><td class="mono">10.4턴</td><td class="mono red">1.0턴</td></tr>
+        </table>
+        <p style="margin-top:12px;"><strong>위험</strong>: 모델이 <code>\n</code> 존재 여부로 클래스를 구분하는 숏컷 학습 가능</p>
+        <p><strong>대응</strong>: 전처리에서 <code>\n → 공백</code> 변환을 train/test 모두에 적용하여 포맷 통일. baseline.csv는 <code>\n</code> 유지(턴 분석용)하되 모델 입력 전 제거.</p>
+      </div>
+      <div class="insight-box">
+        <strong>추가 확인</strong>: 데이터 누출(baseline ∩ test) = <strong>0건</strong> ✅. test 내 중복 2건(t_181 = t_306) 발견 — 대회 데이터 특성으로 우리 통제 밖.
+      </div>
+    </div>
+
+    <div class="timeline-item done">
+      <h3 style="margin-top:0">Step 6. 모델 학습 & 결과</h3>
+      <p>KcELECTRA-base + baseline.csv v2로 학습을 수행하여 <strong>Macro F1 99.02%</strong>를 달성했습니다.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 3. 모델 학습 결과 ====== -->
+<h2><span class="section-num">03</span> 모델 학습 결과</h2>
+
+<h3>하이퍼파라미터</h3>
+<div class="card">
+  <table>
+    <tr><th>파라미터</th><th>설정</th></tr>
+    <tr><td>모델</td><td><code>beomi/KcELECTRA-base</code> (109M params)</td></tr>
+    <tr><td>MAX_LENGTH</td><td>256 토큰 (커버율 99.4%)</td></tr>
+    <tr><td>Batch Size</td><td>16 (train) / 32 (eval)</td></tr>
+    <tr><td>Learning Rate</td><td>2e-5 (AdamW, weight_decay=0.01)</td></tr>
+    <tr><td>Epochs</td><td>7 + EarlyStopping(patience=3)</td></tr>
+    <tr><td>Warmup</td><td>10%</td></tr>
+    <tr><td>Train/Val Split</td><td>85:15 Stratified</td></tr>
+    <tr><td>Dynamic Padding</td><td>✅ DataCollatorWithPadding</td></tr>
+  </table>
+</div>
+
+<h3>클래스별 성능</h3>
+<div class="card">
+  <table>
+    <tr><th>클래스</th><th>Precision</th><th>Recall</th><th>F1</th><th>Support</th></tr>
+    <tr><td>갈취 대화</td><td class="mono">0.9822</td><td class="mono">0.9822</td><td class="mono">0.9822</td><td class="mono">450</td></tr>
+    <tr><td>기타 괴롭힘 대화</td><td class="mono">0.9866</td><td class="mono">0.9844</td><td class="mono">0.9855</td><td class="mono">450</td></tr>
+    <tr><td style="color:var(--green); font-weight:600;">일반 대화</td><td class="mono green">1.0000</td><td class="mono green">1.0000</td><td class="mono green">1.0000</td><td class="mono">450</td></tr>
+    <tr><td>직장 내 괴롭힘 대화</td><td class="mono">1.0000</td><td class="mono">0.9911</td><td class="mono">0.9955</td><td class="mono">450</td></tr>
+    <tr><td>협박 대화</td><td class="mono">0.9824</td><td class="mono">0.9933</td><td class="mono">0.9878</td><td class="mono">450</td></tr>
+    <tr style="border-top:2px solid var(--cyan);"><td><strong>Macro Avg</strong></td><td class="mono"><strong>0.9903</strong></td><td class="mono"><strong>0.9902</strong></td><td class="mono" style="color:var(--green); font-weight:700;"><strong>0.9902</strong></td><td class="mono"><strong>2,250</strong></td></tr>
+  </table>
+</div>
+
+<h3>Confusion Matrix (Validation)</h3>
+<div class="card">
+  <table class="cm-table">
+    <tr><th></th><th>갈취</th><th>기타괴롭힘</th><th>일반</th><th>직장괴롭힘</th><th>협박</th></tr>
+    <tr><td><strong>갈취</strong></td><td class="diag">442</td><td class="error">3</td><td>0</td><td>0</td><td class="error">5</td></tr>
+    <tr><td><strong>기타괴롭힘</strong></td><td class="error">4</td><td class="diag">443</td><td>0</td><td>0</td><td class="error">3</td></tr>
+    <tr><td><strong>일반</strong></td><td>0</td><td>0</td><td class="diag">450</td><td>0</td><td>0</td></tr>
+    <tr><td><strong>직장괴롭힘</strong></td><td class="error">2</td><td class="error">2</td><td>0</td><td class="diag">446</td><td>0</td></tr>
+    <tr><td><strong>협박</strong></td><td class="error">2</td><td class="error">1</td><td>0</td><td>0</td><td class="diag">447</td></tr>
+  </table>
+  <div class="insight-box">
+    <strong>주요 혼동</strong>: 갈취↔협박(7건), 기타괴롭힘↔갈취(4건) — EDA에서 예측한 고유사도 쌍(cosine 0.87)과 일치.<br>
+    <strong>일반 대화: 오분류 0건</strong> — 이모티콘 정제 + Hard Negative 전략의 효과.
+  </div>
+</div>
+
+<!-- ====== 4. Ablation 비교 ====== -->
+<h2><span class="section-num">04</span> Ablation Study — 실험 비교</h2>
+<div class="card">
+  <table>
+    <tr><th>실험</th><th>데이터</th><th>합성/증강</th><th>MAX_LEN</th><th>Val F1</th><th>비고</th></tr>
+    <tr><td>B01</td><td>원본+합성 694건</td><td>없음</td><td class="mono">128</td><td class="mono">0.9219</td><td>초기 baseline</td></tr>
+    <tr><td>S01</td><td>원본+합성 700건</td><td>Hard Negative</td><td class="mono">128</td><td class="mono">0.9221</td><td>Hard Neg 추가</td></tr>
+    <tr><td>S02</td><td>원본+합성 1,200건</td><td>없음</td><td class="mono">128</td><td class="mono">0.9209</td><td>합성 확대</td></tr>
+    <tr><td>S02</td><td>원본+합성 1,200건</td><td>없음</td><td class="mono">256</td><td class="mono">0.9369</td><td>MAX_LEN 확대</td></tr>
+    <tr style="background:rgba(16,185,129,0.08);"><td><strong>B02</strong></td><td><strong>baseline.csv 15,000건</strong></td><td><strong>경량 EDA ×3.7</strong></td><td class="mono"><strong>256</strong></td><td class="mono green" style="font-weight:700;"><strong>0.9902</strong></td><td><strong>이모티콘 정제 + 증강</strong></td></tr>
+  </table>
+  <div class="insight-box">
+    <strong>F1 도약 핵심 요인</strong>: 0.9369 → <strong>0.9902</strong> (+5.3%p)
+    <ul style="margin:8px 0; padding-left:20px;">
+      <li>클래스 균형 (3,000건 × 5 = 15,000건)</li>
+      <li>이모티콘 숏컷 제거</li>
+      <li>경량 증강으로 데이터 다양성 확보</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ====== 5. 특이사항 & 교훈 ====== -->
+<h2><span class="section-num">05</span> 특이사항 & 프로젝트 교훈</h2>
+
+<div class="card">
+  <h3 style="margin-top:0;">1. 이모티콘 숏컷 — 데이터 분포의 함정</h3>
+  <p>원본 위협 데이터에 이모티콘이 <strong>0건</strong>인 상태에서, 합성 일반 대화에만 <code>ㅋㅋ</code>, <code>ㅎㅎ</code>를 넣으면 모델은 "이모티콘 = 일반"이라는 <strong>숏컷</strong>을 학습합니다. Validation에서는 같은 분포이므로 높은 F1이 나오지만, test에서 이모티콘 없는 일반 대화를 위협으로 오분류할 위험이 큽니다.</p>
+  <blockquote>교훈: 합성 데이터의 특징 분포는 반드시 원본과 일치시켜야 한다.</blockquote>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">2. 개행문자(\n) 증발 — Train/Test 구조 불일치</h3>
+  <p>Train은 100% <code>\n</code>으로 턴 구분, Test는 95.2%가 공백으로 이어져 있습니다. 전처리에서 통일하지 않으면 모델이 <code>\n</code> 존재 여부를 분류 신호로 사용하는 최악의 숏컷을 학습합니다.</p>
+  <blockquote>교훈: 모델에 입력되기 직전의 형태로 Train/Test를 비교해야 한다. CSV 레벨이 아니라 전처리 후 형태를 검증.</blockquote>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">3. 에스칼레이션 보존 vs 문장 셔플 모순</h3>
+  <p>EDA에서 "후반부로 갈수록 위협 밀도 급증"(협박: 0.26→0.64)을 핵심 패턴으로 발견해놓고, 증강 전략에서 "문장 순서 셔플"을 포함한 것은 자체 모순이었습니다. 코드 리뷰에서 발견하여 패러프레이즈 증강으로 대체.</p>
+  <blockquote>교훈: EDA 결론과 전략이 일관성을 유지하는지 교차 검증해야 한다.</blockquote>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">4. 한국어 텍스트 증강의 한계</h3>
+  <p>영어에서 효과적인 랜덤 삽입/동의어 교체가 한국어에서는 비문을 생성합니다. "죄송할 하지마! 짓을" 같은 증강 결과가 나와서, <strong>삭제+스왑+구두점 변형</strong>만 사용하는 경량 방식으로 전환했습니다.</p>
+  <blockquote>교훈: 증강 기법의 언어 특성을 고려해야 하며, 증강 결과를 샘플링하여 육안 검수하는 과정이 필수.</blockquote>
+</div>
+
+<!-- ====== 6. Test 예측 & 향후 계획 ====== -->
+<h2><span class="section-num">06</span> Test 예측 분포 & 향후 계획</h2>
+<div class="card">
+  <h3 style="margin-top:0;">Test 예측 분포</h3>
+  <table>
+    <tr><th>클래스</th><th>예측 건수</th><th>비율</th></tr>
+    <tr><td>기타 괴롭힘 대화</td><td class="mono">145</td><td class="mono">29.0%</td></tr>
+    <tr><td>협박 대화</td><td class="mono">114</td><td class="mono">22.8%</td></tr>
+    <tr><td>직장 내 괴롭힘 대화</td><td class="mono">113</td><td class="mono">22.6%</td></tr>
+    <tr><td>갈취 대화</td><td class="mono">105</td><td class="mono">21.0%</td></tr>
+    <tr><td>일반 대화</td><td class="mono yellow">23</td><td class="mono yellow">4.6%</td></tr>
+  </table>
+  <div class="insight-box">
+    <strong>주의</strong>: 일반 대화 예측이 4.6%로 낮음. test 데이터에 일반 대화가 실제로 적거나, 모델이 보수적으로 위협 쪽으로 분류하는 경향일 수 있음. 리더보드 제출 후 분석 필요.
+  </div>
+
+  <h3>향후 계획</h3>
+  <table>
+    <tr><th>우선순위</th><th>항목</th><th>기대 효과</th></tr>
+    <tr><td><span class="tag tag-red">필수</span></td><td>리더보드 제출 & F1 확인</td><td>Val-Test 갭 파악</td></tr>
+    <tr><td><span class="tag tag-yellow">권장</span></td><td>Focal Loss / Label Smoothing 실험</td><td>갈취↔협박 혼동 완화</td></tr>
+    <tr><td><span class="tag tag-yellow">권장</span></td><td>MAX_LEN=384 실험</td><td>긴 대화 정보 손실 해결</td></tr>
+    <tr><td><span class="tag tag-blue">선택</span></td><td>5-Fold Stratified CV</td><td>최종 성능 신뢰도 확보</td></tr>
+    <tr><td><span class="tag tag-blue">선택</span></td><td>모델 비교 (KLUE-RoBERTa, KcBERT)</td><td>최적 백본 탐색</td></tr>
+  </table>
+</div>
+
+<!-- ====== FOOTER ====== -->
+<div class="footer">
+  <p>DLThon — 대화 위협 분류 프로젝트 중간 보고서 &nbsp;|&nbsp; 2026-04-23</p>
+</div>
+
+</div>
+</body>
+</html>

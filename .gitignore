@@ -1,0 +1,10 @@
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+.ipynb_checkpoints/
+
+# 체크포인트 (용량 큼)
+outputs/kcelectra-*/
+
+# 대용량 파일 (100MB 이상만 제외)

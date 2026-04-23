@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[DLThon] 일반 대화 분류 개선 전략</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e17;--card:#1a2332;--card2:#141e2d;--border:#2a3545;--text:#e2e8f0;--text2:#8892a4;--cyan:#06b6d4;--yellow:#f59e0b;--red:#ef4444;--blue:#3b82f6;--green:#10b981}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.7;padding:40px 20px}
+.container{max-width:880px;margin:0 auto}
+h1{font-size:26px;font-weight:700;color:var(--cyan);margin-bottom:6px}
+h2{font-size:19px;font-weight:600;color:var(--cyan);margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+h3{font-size:15px;font-weight:600;color:var(--yellow);margin:20px 0 10px}
+.subtitle{color:var(--text2);font-size:13px;margin-bottom:28px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;margin:14px 0}
+.card-inner{background:var(--card2);border-radius:8px;padding:14px;margin:10px 0}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
+th{background:var(--card2);color:var(--cyan);font-weight:600;text-align:left;padding:8px 10px;border-bottom:2px solid var(--border)}
+td{padding:7px 10px;border-bottom:1px solid var(--border)}
+.mono{font-family:'JetBrains Mono',monospace;font-size:13px}
+.green{color:var(--green)}.red{color:var(--red)}.yellow{color:var(--yellow)}.cyan{color:var(--cyan)}.blue{color:var(--blue)}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;margin:2px}
+.tag-red{background:rgba(239,68,68,0.15);color:var(--red)}
+.tag-green{background:rgba(16,185,129,0.15);color:var(--green)}
+.tag-yellow{background:rgba(245,158,11,0.15);color:var(--yellow)}
+.insight{border-left:3px solid var(--yellow);padding:10px 14px;margin:12px 0;background:rgba(245,158,11,0.05);border-radius:0 8px 8px 0}
+.danger{border-left:3px solid var(--red);padding:10px 14px;margin:12px 0;background:rgba(239,68,68,0.05);border-radius:0 8px 8px 0}
+.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:14px 0}
+.metric-box{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.metric-box .value{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700}
+.metric-box .label{color:var(--text2);font-size:11px;margin-top:4px}
+.compare-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;font-size:13px}
+.compare-row>div{padding:8px 12px;border-bottom:1px solid var(--border)}
+.compare-header>div{font-weight:600;color:var(--cyan);background:var(--card2)}
+code{font-family:'JetBrains Mono',monospace;background:var(--card2);padding:1px 5px;border-radius:3px;font-size:12px}
+.footer{text-align:center;color:var(--text2);font-size:12px;margin-top:40px;padding-top:20px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>[DLThon] 일반 대화 분류 개선 전략</h1>
+<p class="subtitle">Val F1 99% 인데 Test 예측에서 일반 대화가 23/500건(4.6%)뿐인 문제 분석</p>
+
+<!-- ====== 현상 ====== -->
+<h2>1. 현상</h2>
+<div class="card">
+  <div class="metric-grid">
+    <div class="metric-box"><div class="value green">99.02%</div><div class="label">Validation F1</div></div>
+    <div class="metric-box"><div class="value red">0.03</div><div class="label">Kaggle Test F1</div></div>
+    <div class="metric-box"><div class="value yellow">23건</div><div class="label">일반 대화 예측 (500건 중)</div></div>
+  </div>
+  <div class="danger">
+    <strong>핵심 문제</strong>: Validation에서는 99%인데 Test에서 0.03. 이 격차는 <strong>모델이 "문체 숏컷"을 학습</strong>했다는 강력한 증거. 일반 대화의 내용이 아니라, 합성 데이터 특유의 스타일을 외웠다.
+  </div>
+</div>
+
+<!-- ====== 원인 분석 ====== -->
+<h2>2. 원인 분석 — 합성 일반 대화와 실제 Test의 문체 괴리</h2>
+<div class="card">
+  <h3 style="margin-top:0">수치 비교: 모델이 학습한 "일반 대화" vs 실제 Test</h3>
+  <table>
+    <tr><th>특성</th><th>합성 일반 (학습)</th><th>Test 전체</th><th>위협 (학습)</th><th>괴리</th></tr>
+    <tr>
+      <td><strong>존댓말</strong></td>
+      <td class="mono red" style="font-weight:700">0.8회/건</td>
+      <td class="mono">3.7회/건</td>
+      <td class="mono">4.0회/건</td>
+      <td><span class="tag tag-red">4.6배 부족</span></td>
+    </tr>
+    <tr>
+      <td><strong>물음표 (?)</strong></td>
+      <td class="mono red" style="font-weight:700">2.2개</td>
+      <td class="mono">3.4개</td>
+      <td class="mono">4.2개</td>
+      <td><span class="tag tag-red">1.5배 부족</span></td>
+    </tr>
+    <tr>
+      <td><strong>마침표 (.)</strong></td>
+      <td class="mono red" style="font-weight:700">0.4개</td>
+      <td class="mono">5.0개</td>
+      <td class="mono">6.2개</td>
+      <td><span class="tag tag-red">12.5배 부족</span></td>
+    </tr>
+    <tr>
+      <td><strong>느낌표 (!)</strong></td>
+      <td class="mono red" style="font-weight:700">0.0개</td>
+      <td class="mono">0.8개</td>
+      <td class="mono">1.1개</td>
+      <td><span class="tag tag-red">전무</span></td>
+    </tr>
+    <tr>
+      <td><strong>길이</strong></td>
+      <td class="mono yellow">174자</td>
+      <td class="mono">212자</td>
+      <td class="mono">221자</td>
+      <td><span class="tag tag-yellow">22% 짧음</span></td>
+    </tr>
+  </table>
+
+  <div class="danger" style="margin-top:16px">
+    <strong>모델이 학습한 규칙 (의도하지 않은 숏컷):</strong>
+    <ul style="margin:8px 0;padding-left:20px">
+      <li>"마침표가 많으면 → 위협" (합성 일반 0.4 vs 위협 6.2)</li>
+      <li>"존댓말이 있으면 → 위협" (합성 일반 0.8 vs 위협 4.0)</li>
+      <li>"느낌표가 있으면 → 위협" (합성 일반 0.0 vs 위협 1.1)</li>
+      <li>"길면 → 위협" (합성 일반 174자 vs 위협 221자)</li>
+    </ul>
+    <p>→ Test의 일반 대화는 마침표·존댓말·느낌표가 있는 정상 문체 → 모델이 전부 <strong>위협으로 오분류</strong></p>
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">실제 텍스트 비교</h3>
+  <div class="card-inner">
+    <p style="color:var(--text2);font-size:12px;margin-bottom:6px">합성 일반 대화 (학습 데이터)</p>
+    <p style="font-size:13px">"이 원피스 결혼식에 입어도 되나? 화이트인데 그건 안 돼 신부 색이잖아 하객은 화이트 피해야 해 아 맞다 그럼 뭘 입지"</p>
+    <p style="font-size:12px;color:var(--text2);margin-top:4px">→ 반말, 마침표 없음, 짧은 문장, 캐주얼</p>
+  </div>
+  <div class="card-inner">
+    <p style="color:var(--text2);font-size:12px;margin-bottom:6px">Test의 일반 대화 (실제)</p>
+    <p style="font-size:13px">"야 박보영 오늘 학원 갔다왔어 아니 오늘 못갔어 왜 아니 친구랑 놀다가 시간을 못봤어 자랑이냐 깜빡했어 저녁은 뭐야 너는 저녁 없어 학원 다녀왔어야지 엄마 미안해 나 배고파"</p>
+    <p style="font-size:12px;color:var(--text2);margin-top:4px">→ 구어체, 맥락 전환, 가족 대화, 자연스러운 톤</p>
+  </div>
+  <div class="insight">
+    <strong>핵심</strong>: 합성 데이터는 "친구 간 정보 교환" 스타일만 집중. 실제 test에는 가족 대화, 일상 잡담, 감정 표현 등 다양한 유형이 포함되어 있음.
+  </div>
+</div>
+
+<!-- ====== 개선 전략 ====== -->
+<h2>3. 개선 전략</h2>
+
+<div class="card">
+  <h3 style="margin-top:0;color:var(--red)">전략 A. 합성 일반 대화 재생성 (근본 해결) <span class="tag tag-red">최우선</span></h3>
+  <p>현재 합성 데이터의 문체 스펙을 <strong>test 분포에 맞게 재설계</strong></p>
+  <table>
+    <tr><th>특성</th><th>현재 합성</th><th>목표 (test 기준)</th></tr>
+    <tr><td>존댓말</td><td class="mono red">0.8회</td><td class="mono green">3.0~4.0회</td></tr>
+    <tr><td>마침표</td><td class="mono red">0.4개</td><td class="mono green">4.0~6.0개</td></tr>
+    <tr><td>물음표</td><td class="mono yellow">2.2개</td><td class="mono green">3.0~4.0개</td></tr>
+    <tr><td>느낌표</td><td class="mono red">0.0개</td><td class="mono green">0.5~1.0개</td></tr>
+    <tr><td>길이</td><td class="mono yellow">174자</td><td class="mono green">200~250자</td></tr>
+    <tr><td>말투</td><td>반말 위주</td><td class="green">존댓말+반말 혼용 (실제 대화 스타일)</td></tr>
+    <tr><td>도메인</td><td>친구 간 정보 교환</td><td class="green">가족, 민원, 일상 잡담, 서비스 등 다양화</td></tr>
+  </table>
+  <div class="insight">
+    <strong>프롬프트 핵심 변경</strong>: "메신저 반말 대화"가 아니라 <strong>"한국어 일상 대화 데이터셋에 나올 법한 자연스러운 대화"</strong>로 생성 방향 전환. 마침표와 존댓말이 자연스럽게 섞인 구어체.
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;color:var(--yellow)">전략 B. 증강 비율 축소 <span class="tag tag-yellow">권장</span></h3>
+  <p>×3.7 증강이 오히려 <strong>증강 패턴 과적합</strong>을 유발했을 가능성.</p>
+  <table>
+    <tr><th>옵션</th><th>위협 증강</th><th>일반 합성</th><th>총 데이터</th><th>비고</th></tr>
+    <tr><td>현재</td><td class="mono">3,000 (×3.4)</td><td class="mono">3,000</td><td class="mono">15,000</td><td>과적합 위험</td></tr>
+    <tr><td class="green"><strong>옵션 1</strong></td><td class="mono">증강 없음 (원본만)</td><td class="mono">1,000</td><td class="mono">~4,800</td><td>깨끗한 baseline</td></tr>
+    <tr><td class="green"><strong>옵션 2</strong></td><td class="mono">1,500 (×1.5)</td><td class="mono">1,500</td><td class="mono">7,500</td><td>균형 절충</td></tr>
+  </table>
+  <div class="insight">
+    1위 팀(0.79)도 제한된 데이터로 달성. 과도한 증강보다 <strong>적은 양의 고품질 데이터</strong>가 더 효과적일 수 있음.
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;color:var(--blue)">전략 C. 빠른 실험 — 증강 없이 원본+합성만 <span class="tag tag-blue">즉시 실행 가능</span></h3>
+  <p>가장 빠르게 test 결과를 확인할 수 있는 방법:</p>
+  <div class="card-inner">
+    <ol style="padding-left:20px">
+      <li>원본 train (3,846건, 증강 없음)</li>
+      <li>+ 합성 일반 대화 ~1,000건 (기존 합성 중 품질 좋은 것만)</li>
+      <li>= ~4,800건으로 학습</li>
+      <li>MAX_LEN=128로 속도 확보 → 1~2시간 내 결과</li>
+    </ol>
+    <p style="margin-top:8px;color:var(--text2);font-size:13px">이전 실험(S02)에서 이 구성으로 Val F1 0.94 달성. 증강 과적합 제거 시 test 성능 개선 기대.</p>
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">전략 D. 추가 개선 (병행)</h3>
+  <table>
+    <tr><th>항목</th><th>설명</th></tr>
+    <tr><td><strong>Confidence Threshold 조정</strong></td><td>softmax 확률이 낮은 예측을 "일반 대화"로 재분류. 위협 확률이 불확실한 것 = 일반일 가능성</td></tr>
+    <tr><td><strong>Label Smoothing</strong></td><td><code>label_smoothing_factor=0.1</code> — 과적합 완화</td></tr>
+    <tr><td><strong>클래스 가중치</strong></td><td>일반 대화에 더 높은 가중치 부여하여 recall 향상</td></tr>
+    <tr><td><strong>앙상블</strong></td><td>증강 모델 + 비증강 모델 예측 결합</td></tr>
+  </table>
+</div>
+
+<!-- ====== 실행 우선순위 ====== -->
+<h2>4. 실행 우선순위</h2>
+<div class="card">
+  <table>
+    <tr><th>순서</th><th>전략</th><th>소요</th><th>기대 효과</th></tr>
+    <tr><td><span class="tag tag-red">1</span></td><td><strong>전략 C</strong>: 증강 없이 원본+합성만 학습</td><td>1~2시간</td><td>증강 과적합 제거. 빠른 test 성능 확인</td></tr>
+    <tr><td><span class="tag tag-yellow">2</span></td><td><strong>전략 A</strong>: 합성 일반 대화 문체 재생성</td><td>2~3시간</td><td>근본 원인 해결. 존댓말/마침표 분포 일치</td></tr>
+    <tr><td><span class="tag tag-blue">3</span></td><td><strong>전략 B+D</strong>: 적정 증강 + 보조 기법</td><td>3~4시간</td><td>최종 성능 극대화</td></tr>
+  </table>
+</div>
+
+<!-- ====== 핵심 교훈 ====== -->
+<h2>5. 핵심 교훈</h2>
+<div class="card">
+  <div class="danger">
+    <strong>Val F1 99%는 함정이었다.</strong><br>
+    모델은 "대화 내용"이 아니라 "합성 데이터의 문체적 특징"(마침표 없음, 반말 위주, 짧은 길이)을 학습했다. Validation은 같은 합성 데이터 분포이므로 높은 점수가 나오지만, 실제 Test에서는 문체가 다르므로 완전히 실패한다.
+  </div>
+  <div class="insight">
+    <strong>데이터 중심 AI에서의 교훈</strong>: 합성 데이터의 <strong>"내용"만이 아니라 "형식적 특성"(구두점, 말투, 길이)까지</strong> 실제 데이터 분포와 일치시켜야 한다. EDA에서 발견한 수치 기준을 합성 데이터에 적용하되, <strong>test 데이터의 특성도 반드시 교차 확인</strong>해야 한다.
+  </div>
+</div>
+
+<div class="footer">
+  DLThon — 일반 대화 분류 개선 전략 &nbsp;|&nbsp; 2026-04-23
+</div>
+
+</div>
+</body>
+</html>

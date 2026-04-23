@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B03 데이터셋 품질 검증 리포트</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e17;
+  --card: #1a2332;
+  --card2: #141e2d;
+  --border: #2a3545;
+  --text: #e2e8f0;
+  --text2: #8892a4;
+  --cyan: #06b6d4;
+  --yellow: #f59e0b;
+  --red: #ef4444;
+  --blue: #3b82f6;
+  --green: #10b981;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  padding: 32px 24px;
+  max-width: 780px;
+  margin: 0 auto;
+}
+h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--cyan);
+  margin-bottom: 4px;
+}
+.subtitle {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 28px;
+}
+h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--cyan);
+  margin: 28px 0 12px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 18px 0 8px 0;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.card-inner {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin: 10px 0;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin: 8px 0;
+}
+th {
+  text-align: left;
+  padding: 8px 10px;
+  background: var(--card2);
+  color: var(--cyan);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--border);
+}
+td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+}
+td:first-child {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+}
+tr:last-child td { border-bottom: none; }
+.pass { color: var(--green); font-weight: 600; }
+.warn { color: var(--yellow); font-weight: 600; }
+.fail { color: var(--red); font-weight: 600; }
+.critical { color: var(--red); font-weight: 700; }
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+.tag-pass { background: rgba(16,185,129,0.15); color: var(--green); }
+.tag-warn { background: rgba(245,158,11,0.15); color: var(--yellow); }
+.tag-fail { background: rgba(239,68,68,0.15); color: var(--red); }
+.tag-critical { background: rgba(239,68,68,0.25); color: var(--red); }
+.num { font-family: 'JetBrains Mono', monospace; }
+.highlight-box {
+  background: rgba(6,182,212,0.08);
+  border-left: 3px solid var(--cyan);
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin: 12px 0;
+  font-size: 13px;
+}
+.red-box {
+  background: rgba(239,68,68,0.08);
+  border-left: 3px solid var(--red);
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin: 12px 0;
+  font-size: 13px;
+}
+.green-box {
+  background: rgba(16,185,129,0.08);
+  border-left: 3px solid var(--green);
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin: 12px 0;
+  font-size: 13px;
+}
+.bar-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 3px 0;
+}
+.bar-label {
+  font-size: 12px;
+  width: 70px;
+  text-align: right;
+  color: var(--text2);
+}
+.bar-track {
+  flex: 1;
+  height: 16px;
+  background: var(--card2);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+.bar-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  width: 50px;
+  color: var(--text2);
+}
+ul {
+  padding-left: 20px;
+  margin: 6px 0;
+}
+li {
+  font-size: 13px;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+li strong { color: var(--yellow); }
+.footer {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text2);
+  text-align: center;
+}
+.priority-num {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 22px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-right: 6px;
+}
+.p-crit { background: var(--red); color: #fff; }
+.p-high { background: var(--yellow); color: #0a0e17; }
+.p-med { background: var(--blue); color: #fff; }
+</style>
+</head>
+<body>
+
+<h1>B03 Dataset Quality Verification</h1>
+<p class="subtitle">DKTC 한국어 대화 위협 분류 | baseline_B03.csv (15,000건) | 2026-04-22</p>
+
+<!-- 배경 요약 -->
+<div class="card">
+  <h3 style="color:var(--cyan); margin-top:0;">Background</h3>
+  <p style="font-size:13px; color:var(--text2);">
+    B02 실험에서 <span class="num" style="color:var(--green);">Val F1=0.990</span> &rarr; <span class="num" style="color:var(--red);">Kaggle F1=0.03</span> 참사 발생.
+    원인: 합성 일반대화의 <strong style="color:var(--yellow);">문체 숏컷</strong>(마침표/존댓말/느낌표 분포 불일치).
+    B03에서 fix_style() 보정 적용 후 학습 중. 이 리포트는 보정 결과의 충분성을 검증합니다.
+  </p>
+  <div style="display:flex; gap:16px; margin-top:12px;">
+    <div style="flex:1; text-align:center; padding:8px; background:var(--card2); border-radius:6px;">
+      <div style="font-size:11px; color:var(--text2);">B03 일반</div>
+      <div class="num" style="font-size:18px; color:var(--cyan);">3,000</div>
+    </div>
+    <div style="flex:1; text-align:center; padding:8px; background:var(--card2); border-radius:6px;">
+      <div style="font-size:11px; color:var(--text2);">B03 위협</div>
+      <div class="num" style="font-size:18px; color:var(--cyan);">12,000</div>
+    </div>
+    <div style="flex:1; text-align:center; padding:8px; background:var(--card2); border-radius:6px;">
+      <div style="font-size:11px; color:var(--text2);">테스트</div>
+      <div class="num" style="font-size:18px; color:var(--cyan);">500</div>
+    </div>
+  </div>
+</div>
+
+<!-- 검증 5: 보정 충분성 (가장 중요하므로 먼저) -->
+<h2>1. 보정 달성도 평가</h2>
+
+<div class="card">
+  <table>
+    <tr>
+      <th>특성</th>
+      <th style="text-align:right;">B03 일반</th>
+      <th style="text-align:right;">테스트</th>
+      <th style="text-align:right;">위협</th>
+      <th style="text-align:right;">갭</th>
+      <th style="text-align:center;">판정</th>
+    </tr>
+    <tr>
+      <td>마침표 (.)</td>
+      <td style="text-align:right;">3.02</td>
+      <td style="text-align:right;">4.99</td>
+      <td style="text-align:right;">6.18</td>
+      <td style="text-align:right; color:var(--yellow);">+39%</td>
+      <td style="text-align:center;"><span class="tag tag-warn">WARN</span></td>
+    </tr>
+    <tr>
+      <td>느낌표 (!)</td>
+      <td style="text-align:right;">0.05</td>
+      <td style="text-align:right;">0.85</td>
+      <td style="text-align:right;">1.15</td>
+      <td style="text-align:right; color:var(--red);">+94%</td>
+      <td style="text-align:center;"><span class="tag tag-fail">FAIL</span></td>
+    </tr>
+    <tr>
+      <td>물음표 (?)</td>
+      <td style="text-align:right;">2.18</td>
+      <td style="text-align:right;">3.40</td>
+      <td style="text-align:right;">4.15</td>
+      <td style="text-align:right; color:var(--yellow);">+36%</td>
+      <td style="text-align:center;"><span class="tag tag-warn">WARN</span></td>
+    </tr>
+    <tr>
+      <td>존댓말</td>
+      <td style="text-align:right;">1.38</td>
+      <td style="text-align:right;">3.73</td>
+      <td style="text-align:right;">4.02</td>
+      <td style="text-align:right; color:var(--red);">+63%</td>
+      <td style="text-align:center;"><span class="tag tag-fail">FAIL</span></td>
+    </tr>
+    <tr>
+      <td>캐주얼 (ㅋㅎ)</td>
+      <td style="text-align:right;">0.03</td>
+      <td style="text-align:right;">0.00</td>
+      <td style="text-align:right;">0.00</td>
+      <td style="text-align:right; color:var(--green);">&asymp;0</td>
+      <td style="text-align:center;"><span class="tag tag-pass">PASS</span></td>
+    </tr>
+    <tr>
+      <td>텍스트 길이</td>
+      <td style="text-align:right;">173</td>
+      <td style="text-align:right;">212</td>
+      <td style="text-align:right;">221</td>
+      <td style="text-align:right; color:var(--green);">+18%</td>
+      <td style="text-align:center;"><span class="tag tag-pass">PASS</span></td>
+    </tr>
+  </table>
+
+  <div class="red-box" style="margin-top:14px;">
+    <strong style="color:var(--red);">결론:</strong> 캐주얼 마커 제거와 길이는 양호하나,
+    <strong>느낌표(+94%)</strong>와 <strong>존댓말(+63%)</strong>은 여전히 테스트 대비 크게 부족.
+    마침표/물음표도 경계 수준(+36~39%).
+  </div>
+</div>
+
+<!-- 숏컷 위험도 -->
+<h2>2. 숏컷 분리 위험도 (Cohen's d)</h2>
+
+<div class="card">
+  <p style="font-size:12px; color:var(--text2); margin-bottom:12px;">
+    Cohen's d &gt; 0.8이면 단일 특성만으로 일반/위협 완전 분리 가능 = 숏컷 학습 위험
+  </p>
+
+  <div class="bar-container">
+    <span class="bar-label">물음표</span>
+    <div class="bar-track">
+      <div class="bar-fill" style="width:88%; background:var(--red);"></div>
+    </div>
+    <span class="bar-value" style="color:var(--red);">d=0.88</span>
+  </div>
+  <div class="bar-container">
+    <span class="bar-label">존댓말</span>
+    <div class="bar-track">
+      <div class="bar-fill" style="width:78%; background:var(--red);"></div>
+    </div>
+    <span class="bar-value" style="color:var(--red);">d=0.78</span>
+  </div>
+  <div class="bar-container">
+    <span class="bar-label">마침표</span>
+    <div class="bar-track">
+      <div class="bar-fill" style="width:77%; background:var(--yellow);"></div>
+    </div>
+    <span class="bar-value" style="color:var(--yellow);">d=0.77</span>
+  </div>
+  <div class="bar-container">
+    <span class="bar-label">길이</span>
+    <div class="bar-track">
+      <div class="bar-fill" style="width:60%; background:var(--yellow);"></div>
+    </div>
+    <span class="bar-value" style="color:var(--yellow);">d=0.60</span>
+  </div>
+  <div class="bar-container">
+    <span class="bar-label">느낌표</span>
+    <div class="bar-track">
+      <div class="bar-fill" style="width:49%; background:var(--blue);"></div>
+    </div>
+    <span class="bar-value" style="color:var(--blue);">d=0.49</span>
+  </div>
+
+  <div class="highlight-box" style="margin-top:14px;">
+    <strong style="color:var(--cyan);">해석:</strong>
+    물음표(0.88)가 CRITICAL 영역. 존댓말(0.78)과 마침표(0.77)도 HIGH.
+    B02 대비 개선되었으나, 모델이 여전히 이 특성들을 숏컷으로 학습할 가능성 존재.
+  </div>
+</div>
+
+<!-- 검증 1: 도메인 유사도 -->
+<h2>3. 도메인(내용) 커버리지 비교</h2>
+
+<div class="card">
+  <table>
+    <tr>
+      <th>도메인</th>
+      <th style="text-align:right;">테스트</th>
+      <th style="text-align:right;">B03 일반</th>
+      <th style="text-align:right;">갭</th>
+      <th style="text-align:center;">상태</th>
+    </tr>
+    <tr>
+      <td>날씨/계절</td>
+      <td style="text-align:right;">21.0%</td>
+      <td style="text-align:right;">38.8%</td>
+      <td style="text-align:right; color:var(--blue);">-17.8%p</td>
+      <td style="text-align:center;"><span class="tag tag-warn">과대</span></td>
+    </tr>
+    <tr>
+      <td>음식/맛집</td>
+      <td style="text-align:right;">15.6%</td>
+      <td style="text-align:right;">33.0%</td>
+      <td style="text-align:right; color:var(--blue);">-17.4%p</td>
+      <td style="text-align:center;"><span class="tag tag-warn">과대</span></td>
+    </tr>
+    <tr>
+      <td>가족/관계</td>
+      <td style="text-align:right;">21.0%</td>
+      <td style="text-align:right;">9.5%</td>
+      <td style="text-align:right; color:var(--red);">+11.5%p</td>
+      <td style="text-align:center;"><span class="tag tag-fail">부족</span></td>
+    </tr>
+    <tr>
+      <td>금전</td>
+      <td style="text-align:right;">29.6%</td>
+      <td style="text-align:right;">21.7%</td>
+      <td style="text-align:right; color:var(--yellow);">+7.9%p</td>
+      <td style="text-align:center;"><span class="tag tag-warn">부족</span></td>
+    </tr>
+    <tr>
+      <td>연애/이별</td>
+      <td style="text-align:right;">8.6%</td>
+      <td style="text-align:right;">3.3%</td>
+      <td style="text-align:right; color:var(--yellow);">+5.3%p</td>
+      <td style="text-align:center;"><span class="tag tag-warn">부족</span></td>
+    </tr>
+    <tr>
+      <td>감정/갈등</td>
+      <td style="text-align:right;">16.4%</td>
+      <td style="text-align:right;">12.6%</td>
+      <td style="text-align:right;">+3.8%p</td>
+      <td style="text-align:center;"><span class="tag tag-pass">OK</span></td>
+    </tr>
+    <tr>
+      <td>직장/회사</td>
+      <td style="text-align:right;">18.6%</td>
+      <td style="text-align:right;">16.3%</td>
+      <td style="text-align:right;">+2.3%p</td>
+      <td style="text-align:center;"><span class="tag tag-pass">OK</span></td>
+    </tr>
+    <tr>
+      <td>학교/학업</td>
+      <td style="text-align:right;">13.2%</td>
+      <td style="text-align:right;">15.5%</td>
+      <td style="text-align:right;">-2.3%p</td>
+      <td style="text-align:center;"><span class="tag tag-pass">OK</span></td>
+    </tr>
+  </table>
+
+  <div class="highlight-box" style="margin-top:12px;">
+    합성 일반이 <strong>날씨/음식에 편중</strong>(각 39%, 33%)되어 있고,
+    테스트의 주요 도메인인 <strong style="color:var(--red);">가족/관계(-11.5%p)</strong>,
+    <strong style="color:var(--yellow);">금전(-7.9%p)</strong>이 부족.<br>
+    어휘 겹침률: <span class="num">19.6%</span> (2,413 / 12,323 테스트 어휘)
+  </div>
+</div>
+
+<!-- 검증 2: 테스트 데이터 분석 -->
+<h2>4. 테스트 데이터 프로파일</h2>
+
+<div class="card">
+  <div style="display:flex; gap:12px; flex-wrap:wrap;">
+    <div style="flex:1; min-width:140px; text-align:center; padding:10px; background:var(--card2); border-radius:6px;">
+      <div style="font-size:11px; color:var(--text2);">위협kw 없음 (일반 추정)</div>
+      <div class="num" style="font-size:22px; color:var(--green);">334건</div>
+      <div style="font-size:11px; color:var(--text2);">67%</div>
+    </div>
+    <div style="flex:1; min-width:140px; text-align:center; padding:10px; background:var(--card2); border-radius:6px;">
+      <div style="font-size:11px; color:var(--text2);">위협kw 있음</div>
+      <div class="num" style="font-size:22px; color:var(--yellow);">166건</div>
+      <div style="font-size:11px; color:var(--text2);">33%</div>
+    </div>
+  </div>
+
+  <div class="card-inner" style="margin-top:14px;">
+    <h3 style="font-size:12px; color:var(--text2); margin:0 0 8px 0;">테스트 전체 문체 통계</h3>
+    <table>
+      <tr><th>특성</th><th style="text-align:right;">평균</th><th style="text-align:right;">&sigma;</th></tr>
+      <tr><td>마침표</td><td style="text-align:right;">4.99</td><td style="text-align:right;">5.36</td></tr>
+      <tr><td>느낌표</td><td style="text-align:right;">0.85</td><td style="text-align:right;">2.86</td></tr>
+      <tr><td>물음표</td><td style="text-align:right;">3.40</td><td style="text-align:right;">2.94</td></tr>
+      <tr><td>존댓말</td><td style="text-align:right;">3.73</td><td style="text-align:right;">4.56</td></tr>
+      <tr><td>캐주얼</td><td style="text-align:right;">0.00</td><td style="text-align:right;">0.00</td></tr>
+      <tr><td>길이</td><td style="text-align:right;">211.9</td><td style="text-align:right;">100.9</td></tr>
+    </table>
+  </div>
+  <p style="font-size:12px; color:var(--text2); margin-top:8px;">
+    * 테스트에는 캐주얼 마커(ㅋㅎㅠㅜ)가 전혀 없음 &mdash; B03의 이모티콘 제거 전략은 올바름
+  </p>
+</div>
+
+<!-- 검증 3 & 4: 경계 사례 -->
+<h2>5. 경계 사례 분석</h2>
+
+<div class="card">
+  <h3>B03 일반대화 중 위협 키워드 포함</h3>
+  <div class="green-box">
+    <span class="num" style="color:var(--green);">43건 / 3,000건 (1.4%)</span> &mdash; 대부분 오탐 (칼국수&rarr;칼, 고소한&rarr;고소, 신고&rarr;신발 신고)
+    <br>실제 위협 의도 없음. <strong style="color:var(--green);">필터링 불필요.</strong>
+  </div>
+
+  <h3 style="margin-top:16px;">B03 위협 중 일반 혼동 가능</h3>
+  <div class="red-box">
+    위협 키워드 0개인 위협: <span class="num" style="color:var(--red);">7,793건 / 12,000건 (64.9%)</span><br>
+    위협 키워드 0~1개: <span class="num" style="color:var(--red);">10,019건 (83.5%)</span>
+  </div>
+  <p style="font-size:12px; color:var(--text2); margin-top:8px;">
+    위협 대화의 대다수가 명시적 키워드 없이 맥락으로 위협을 전달.
+    모델이 <strong style="color:var(--yellow);">문체 숏컷이 아닌 의미적 패턴</strong>을 학습해야 하는 근거.
+  </p>
+
+  <h3 style="margin-top:16px;">일상 주제 포함 위협</h3>
+  <p style="font-size:13px;">
+    밥/점심/커피/영화 등 일상 키워드 2개 이상 포함된 위협: <span class="num">139건</span><br>
+    <span style="color:var(--text2); font-size:12px;">주로 직장 내 괴롭힘(업무 중 식사 강요) 및 협박(일상 속 위협) 맥락</span>
+  </p>
+</div>
+
+<!-- 종합 개선 제안 -->
+<h2>6. 개선 제안 (우선순위순)</h2>
+
+<div class="card">
+  <!-- P1 -->
+  <div style="margin-bottom:16px;">
+    <div style="display:flex; align-items:center; margin-bottom:6px;">
+      <span class="priority-num p-crit">1</span>
+      <strong style="color:var(--red);">마침표 보정 강화</strong>
+      <span class="tag tag-warn" style="margin-left:8px;">현재 3.02 &rarr; 목표 5.0</span>
+    </div>
+    <p style="font-size:13px; padding-left:28px;">
+      현재 35% 확률 턴 단위 주입은 불충분. <strong>결정적 주입</strong>으로 전환:
+      텍스트당 목표 마침표 수를 <code>gauss(5.0, 1.5)</code>로 설정 후,
+      턴별 순회하며 부족분 채우기. <code>'요'</code>, <code>'다'</code> 종결 턴도 대상에 포함.
+    </p>
+  </div>
+
+  <!-- P2 -->
+  <div style="margin-bottom:16px;">
+    <div style="display:flex; align-items:center; margin-bottom:6px;">
+      <span class="priority-num p-crit">2</span>
+      <strong style="color:var(--red);">존댓말 변환 패턴 확장</strong>
+      <span class="tag tag-fail" style="margin-left:8px;">현재 1.38 &rarr; 목표 3.7</span>
+    </div>
+    <p style="font-size:13px; padding-left:28px;">
+      현재 6개 어미 &rarr; <strong>15개+</strong> 확장:
+      잖아&rarr;잖아요, 네&rarr;네요, 래&rarr;래요, 인데&rarr;인데요,
+      거야&rarr;거예요, 좋아&rarr;좋아요, 그래&rarr;그래요 등.
+      변환 확률 25% &rarr; <strong>40%</strong>로 상향.
+    </p>
+  </div>
+
+  <!-- P3 -->
+  <div style="margin-bottom:16px;">
+    <div style="display:flex; align-items:center; margin-bottom:6px;">
+      <span class="priority-num p-high">3</span>
+      <strong style="color:var(--yellow);">느낌표 직접 주입</strong>
+      <span class="tag tag-fail" style="margin-left:8px;">현재 0.05 &rarr; 목표 0.85</span>
+    </div>
+    <p style="font-size:13px; padding-left:28px;">
+      현재 미대응. 감탄사(진짜, 와, 대박, 좋다) 뒤 느낌표 추가,
+      또는 텍스트당 1개 느낌표를 랜덤 턴에 삽입.
+    </p>
+  </div>
+
+  <!-- P4 -->
+  <div style="margin-bottom:16px;">
+    <div style="display:flex; align-items:center; margin-bottom:6px;">
+      <span class="priority-num p-med">4</span>
+      <strong style="color:var(--blue);">물음표 보완</strong>
+      <span class="tag tag-warn" style="margin-left:8px;">현재 2.18 &rarr; 목표 3.4</span>
+    </div>
+    <p style="font-size:13px; padding-left:28px;">
+      의문사(뭐, 어디, 언제, 왜, 어떻게) 포함 턴에 물음표 없으면 추가.
+    </p>
+  </div>
+
+  <!-- P5 -->
+  <div style="margin-bottom:16px;">
+    <div style="display:flex; align-items:center; margin-bottom:6px;">
+      <span class="priority-num p-med">5</span>
+      <strong style="color:var(--blue);">도메인 다양성 보완</strong>
+    </div>
+    <p style="font-size:13px; padding-left:28px;">
+      가족/관계(-11.5%p), 금전(-7.9%p), 연애/이별(-5.3%p) 부족.
+      날씨/음식 과대 비중 축소, 부족 도메인 합성 데이터 추가 생성.
+    </p>
+  </div>
+
+  <!-- 양호 항목 -->
+  <div class="green-box">
+    <strong style="color:var(--green);">양호 항목:</strong>
+    캐주얼 마커 제거 (PASS), 텍스트 길이 (PASS, 갭 18%),
+    위협 키워드 오탐 (43건, 무해)
+  </div>
+</div>
+
+<!-- 최종 판정 -->
+<h2>7. 최종 판정</h2>
+
+<div class="card" style="border-color:var(--yellow);">
+  <div style="text-align:center; padding:12px 0;">
+    <span class="tag tag-warn" style="font-size:16px; padding:6px 20px;">B03 보정: 부분적 개선, 추가 보정 필요</span>
+  </div>
+  <div style="margin-top:14px; font-size:13px;">
+    <p>B02 대비 캐주얼 마커 제거 및 마침표 일부 보정은 진전이나,
+    <strong style="color:var(--red);">5개 특성 중 2개 FAIL(느낌표, 존댓말)</strong>,
+    <strong style="color:var(--yellow);">2개 WARN(마침표, 물음표)</strong>.</p>
+    <p style="margin-top:8px;">
+    Cohen's d 기준 물음표(0.88)가 CRITICAL 영역으로,
+    B03도 <strong style="color:var(--yellow);">문체 숏컷 학습 위험이 잔존</strong>합니다.</p>
+    <p style="margin-top:8px;">
+    B03 결과를 확인한 뒤, 위 우선순위 1~3 보정을 적용한 <strong style="color:var(--cyan);">B04 실험</strong>을 권장합니다.</p>
+  </div>
+</div>
+
+<div class="footer">
+  Generated by Claude Code | DLThon B03 Quality Verification | 2026-04-22
+</div>
+
+</body>
+</html>

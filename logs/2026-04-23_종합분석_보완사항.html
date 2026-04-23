@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DKTC 종합 분석 - 현재 결과 보완 사항</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e17;--card:#1a2332;--card2:#141e2d;--border:#2a3545;--text:#e2e8f0;--text2:#8892a4;--cyan:#06b6d4;--yellow:#f59e0b;--red:#ef4444;--blue:#3b82f6;--green:#10b981;--purple:#a78bfa}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.7;padding:20px}
+.container{max-width:840px;margin:0 auto}
+h1{color:var(--cyan);font-size:1.7em;margin-bottom:4px}
+h2{color:var(--cyan);font-size:1.25em;margin:36px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+h3{color:var(--yellow);font-size:1em;margin:20px 0 10px}
+.subtitle{color:var(--text2);font-size:0.93em;margin-bottom:28px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin:14px 0}
+.card-inner{background:var(--card2);border-radius:8px;padding:14px;margin:10px 0}
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.78em;font-weight:600;margin-right:4px}
+.tag-red{background:rgba(239,68,68,0.15);color:var(--red)}
+.tag-yellow{background:rgba(245,158,11,0.15);color:var(--yellow)}
+.tag-green{background:rgba(16,185,129,0.15);color:var(--green)}
+.tag-blue{background:rgba(59,130,246,0.15);color:var(--blue)}
+.tag-purple{background:rgba(167,139,250,0.15);color:var(--purple)}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:0.88em}
+th{background:var(--card2);color:var(--cyan);padding:10px 12px;text-align:left;font-weight:600}
+td{padding:9px 12px;border-bottom:1px solid var(--border)}
+.num{font-family:'JetBrains Mono',monospace;color:var(--yellow);font-weight:500}
+.insight{border-left:3px solid var(--yellow);padding:12px 16px;margin:12px 0;background:rgba(245,158,11,0.05);border-radius:0 8px 8px 0}
+.insight.danger{border-left-color:var(--red);background:rgba(239,68,68,0.05)}
+.insight.success{border-left-color:var(--green);background:rgba(16,185,129,0.05)}
+.priority-high{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:16px;margin:12px 0}
+.priority-med{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:16px;margin:12px 0}
+code{background:var(--card2);padding:2px 7px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:0.88em}
+pre{background:var(--card2);padding:14px;border-radius:8px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:0.85em;line-height:1.5;margin:10px 0}
+.footer{text-align:center;color:var(--text2);font-size:0.8em;margin-top:40px;padding-top:20px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>DKTC 종합 분석: 현재 결과 보완 사항</h1>
+<p class="subtitle">두 세션 결과 + strategy_v1.md 통합 분석 | 2026-04-23</p>
+
+<!-- ===== 현황 ===== -->
+<h2>1. 두 세션 결과 통합 비교</h2>
+<div class="card">
+  <table>
+    <tr><th>실험</th><th>세션</th><th>데이터</th><th>증강</th><th>max_len</th><th>Val F1</th><th>Test 일반대화</th></tr>
+    <tr><td class="num">B01</td><td>세션1</td><td>원본3,846 + 합성694</td><td>없음</td><td class="num">128</td><td class="num">0.922</td><td class="num">34건</td></tr>
+    <tr><td class="num">S01</td><td>세션1</td><td>원본3,846 + 합성700(v2)</td><td>없음</td><td class="num">128</td><td class="num">0.922</td><td class="num">35건</td></tr>
+    <tr><td class="num">S02</td><td>세션1</td><td>원본3,846 + 합성1,200</td><td>없음</td><td class="num">128</td><td class="num">0.921</td><td class="num">38건</td></tr>
+    <tr><td class="num">v3</td><td>세션1</td><td>원본3,846 + 합성1,200</td><td>없음</td><td class="num">256</td><td class="num">0.937</td><td class="num" style="color:var(--green)">46건</td></tr>
+    <tr style="background:rgba(239,68,68,0.06)"><td class="num">B02</td><td>세션2</td><td>baseline.csv (15,000건 균형)</td><td>경량EDA(삭제+스왑+구두점)</td><td class="num">256</td><td class="num" style="color:var(--green)">0.990</td><td class="num" style="color:var(--red)">23건</td></tr>
+  </table>
+
+  <div class="insight danger" style="margin-top:14px">
+    <strong>핵심 문제:</strong> B02는 Val F1 0.990(거의 완벽)이지만 Test에서 일반 대화를 <strong>23건</strong>밖에 못 잡음. 15,000건 균형 데이터 + 증강까지 했는데 오히려 우리 세션(34~46건)보다 나쁨. <strong>Val 과적합이 심각</strong>.
+  </div>
+
+  <div class="insight success">
+    <strong>발견:</strong> v3(max_len=256, 합성1,200건)이 <strong>46건</strong>으로 현재 최고. max_len=256이 일반 대화 탐지에 영향을 준 것으로 보이나, CPU 속도 문제로 학습 완료 여부 재확인 필요.
+  </div>
+</div>
+
+<!-- ===== 보완사항 ===== -->
+<h2>2. 긴급 보완 사항 (즉시 조치)</h2>
+
+<div class="priority-high">
+<h3 style="color:var(--red)">보완 1: 합성 데이터 이모티콘 숏컷 문제</h3>
+<p><span class="tag tag-red">긴급</span> strategy_v1.md에서 경고한 내용이 현재 반영되지 않음</p>
+<div class="card-inner" style="margin-top:10px">
+  <table style="margin:0">
+    <tr><th>항목</th><th>원본 Train</th><th>우리 합성 데이터</th><th>위험</th></tr>
+    <tr><td>이모티콘 (ㅋㅋ, ㅎㅎ, ㅠㅠ)</td><td class="num" style="color:var(--red)">0.0건 (없음!)</td><td>대부분 포함</td><td style="color:var(--red);font-weight:600">모델이 "이모티콘 있음 = 일반 대화" 숏컷 학습</td></tr>
+    <tr><td>말줄임 (...)</td><td class="num" style="color:var(--red)">0.0건</td><td>일부 포함</td><td style="color:var(--red)">동일 위험</td></tr>
+  </table>
+  <p style="color:var(--text2);font-size:0.88em;margin-top:8px"><strong>원인:</strong> 원본 train 데이터의 <code>emoticon_len = 0.0</code>인데, 합성 데이터 생성 시 "자연스러운 대화"를 위해 ㅋㅋ, ㅎㅎ을 넣었음. 이로 인해 모델은 이모티콘 유무만으로 일반/위협을 구분하는 숏컷을 학습.</p>
+  <p style="color:var(--text2);font-size:0.88em"><strong>해결:</strong> 합성 데이터에서 <strong>모든 이모티콘/초성 패턴 제거</strong> 후 재학습. 또는 이모티콘 유지/제거 Ablation 실험.</p>
+</div>
+<pre style="font-size:0.83em"><span style="color:var(--cyan)">import</span> re
+<span style="color:var(--cyan)">def</span> remove_emoticons(text):
+    <span style="color:var(--text2)"># ㅋ, ㅎ, ㅠ, ㅜ 반복 패턴 제거</span>
+    text = re.sub(r'[ㅋㅎㅠㅜ]{2,}', '', text)
+    <span style="color:var(--text2)"># ... 말줄임 제거</span>
+    text = re.sub(r'\.{2,}', '', text)
+    <span style="color:var(--cyan)">return</span> re.sub(r'\s+', ' ', text).strip()</pre>
+</div>
+
+<div class="priority-high">
+<h3 style="color:var(--red)">보완 2: 제출 파일 레이블 형식 확인</h3>
+<p><span class="tag tag-red">긴급</span> 숫자 레이블 제출 시 일반 대화(4) 누락 버그</p>
+<div class="card-inner" style="margin-top:10px">
+  <p><code>submit_num_order.csv</code>에 <strong>NaN이 23건</strong> 존재:</p>
+  <table style="margin:6px 0">
+    <tr><th>파일</th><th>클래스 값</th><th>일반 대화</th><th>문제</th></tr>
+    <tr><td>submit_str.csv</td><td>한글 문자열</td><td class="num">23건 (일반 대화)</td><td>정상</td></tr>
+    <tr><td>submit_num_order.csv</td><td>숫자 (0~3)</td><td style="color:var(--red)">NaN 23건</td><td style="color:var(--red);font-weight:600">4가 없음! 레이블 매핑 누락</td></tr>
+    <tr><td>submit_num_trainorder.csv</td><td>숫자 (0~4)</td><td class="num">23건 (4)</td><td>정상</td></tr>
+  </table>
+  <p style="color:var(--text2);font-size:0.88em"><strong>해결:</strong> Kaggle 제출 시 어떤 레이블 형식을 요구하는지 재확인. NaN이 있는 파일로 제출하면 F1 점수에 큰 손실.</p>
+</div>
+</div>
+
+<div class="priority-high">
+<h3 style="color:var(--red)">보완 3: Val/Test 괴리 (과적합)</h3>
+<p><span class="tag tag-red">긴급</span> 모든 실험에서 Val은 높지만 Test 일반대화 탐지가 저조</p>
+<div class="card-inner" style="margin-top:10px">
+  <table style="margin:0">
+    <tr><th>지표</th><th>B01 (세션1)</th><th>B02 (세션2)</th><th>해석</th></tr>
+    <tr><td>Val 일반대화 F1</td><td class="num" style="color:var(--green)">0.995</td><td class="num" style="color:var(--green)">~0.99+</td><td>두 세션 모두 "완벽"</td></tr>
+    <tr><td>Test 일반대화 예측</td><td class="num">34건 / 100건</td><td class="num" style="color:var(--red)">23건 / 100건</td><td style="color:var(--red)">실제 성능은 매우 낮음</td></tr>
+  </table>
+  <p style="color:var(--text2);font-size:0.88em;margin-top:10px"><strong>원인:</strong> Validation에 사용하는 일반 대화도 합성 데이터에서 분할한 것. 합성 데이터끼리는 잘 구분하지만, 실제 일반 대화는 분포가 다름. <strong>Validation 자체가 실제 성능을 반영하지 못함.</strong></p>
+  <p style="color:var(--text2);font-size:0.88em"><strong>해결:</strong> 합성 데이터의 스타일을 실제 대화에 맞추거나, pseudo-labeling으로 Test 예측 → 고신뢰 샘플을 훈련에 추가하는 self-training 접근.</p>
+</div>
+</div>
+
+<!-- ===== strategy_v1.md 미구현 사항 ===== -->
+<h2>3. strategy_v1.md 대비 미구현 사항</h2>
+<div class="card">
+  <p style="color:var(--text2);font-size:0.9em;margin-bottom:12px">strategy_v1.md에 설계되었지만 아직 실행하지 않은 항목들:</p>
+  <table>
+    <tr><th>항목</th><th>전략 내용</th><th>상태</th><th>우선순위</th></tr>
+    <tr>
+      <td>이모티콘 제거</td>
+      <td>합성 데이터에서 ㅋㅋ/ㅎㅎ 제거</td>
+      <td style="color:var(--red)">미구현</td>
+      <td><span class="tag tag-red">필수</span></td>
+    </tr>
+    <tr>
+      <td>준-중복 제거</td>
+      <td>TF-IDF cosine ≥0.95 데이터 제거</td>
+      <td style="color:var(--red)">미구현</td>
+      <td><span class="tag tag-yellow">권장</span></td>
+    </tr>
+    <tr>
+      <td>합성 3,000건</td>
+      <td>일반 대화를 위협 클래스와 동일한 3,000건으로</td>
+      <td>1,200건까지 진행</td>
+      <td><span class="tag tag-yellow">권장</span></td>
+    </tr>
+    <tr>
+      <td>증강 (위협 4클래스)</td>
+      <td>동의어 교체 + 패러프레이즈 + 역번역 (3,000건/클래스 목표)</td>
+      <td style="color:var(--red)">미구현</td>
+      <td><span class="tag tag-yellow">권장</span></td>
+    </tr>
+    <tr>
+      <td>합성 품질 검증</td>
+      <td>자동 validator (길이/턴수/금지단어/비속어 검사)</td>
+      <td style="color:var(--red)">미구현</td>
+      <td><span class="tag tag-yellow">권장</span></td>
+    </tr>
+    <tr>
+      <td>Focal Loss</td>
+      <td>혼동 클래스 쌍(협박↔기타괴롭힘 유사도 0.87) 완화</td>
+      <td style="color:var(--red)">미구현</td>
+      <td><span class="tag tag-blue">선택</span></td>
+    </tr>
+    <tr>
+      <td>Label Smoothing</td>
+      <td><code>label_smoothing_factor=0.1</code></td>
+      <td style="color:var(--red)">미구현</td>
+      <td><span class="tag tag-blue">선택</span></td>
+    </tr>
+    <tr>
+      <td>[TURN] 토큰</td>
+      <td>\n → [TURN] special token으로 대화 구조 정보 활용</td>
+      <td style="color:var(--red)">미구현</td>
+      <td><span class="tag tag-blue">선택</span></td>
+    </tr>
+    <tr>
+      <td>모델 비교</td>
+      <td>KcBERT, KLUE-RoBERTa와 비교</td>
+      <td style="color:var(--red)">미구현</td>
+      <td><span class="tag tag-yellow">권장</span></td>
+    </tr>
+    <tr>
+      <td>Mean/Attention Pooling</td>
+      <td>[CLS] 대신 커스텀 풀링으로 후반부 위협 패턴 포착</td>
+      <td style="color:var(--red)">미구현</td>
+      <td><span class="tag tag-blue">선택</span></td>
+    </tr>
+  </table>
+</div>
+
+<!-- ===== 합성 데이터 ===== -->
+<h2>4. 합성 데이터 품질 개선 포인트</h2>
+<div class="card">
+  <p style="margin-bottom:12px">strategy_v1.md의 스펙과 현재 합성 데이터 비교:</p>
+  <table>
+    <tr><th>파라미터</th><th>strategy_v1 스펙</th><th>현재 합성 데이터</th><th>격차</th></tr>
+    <tr><td>총 건수</td><td class="num">3,000건</td><td class="num">1,200건</td><td style="color:var(--red)">1,800건 부족</td></tr>
+    <tr><td>글자 수</td><td class="num">180~250자</td><td class="num">111~260자 (avg 187)</td><td style="color:var(--yellow)">하한 미달 일부 존재</td></tr>
+    <tr><td>발화 횟수</td><td class="num">10턴 (±2)</td><td>가변적</td><td style="color:var(--yellow)">미검증</td></tr>
+    <tr><td>이모티콘</td><td style="color:var(--red);font-weight:600">절대 금지</td><td>ㅋㅋ, ㅎㅎ 포함</td><td style="color:var(--red);font-weight:600">숏컷 위험</td></tr>
+    <tr><td>비속어</td><td>0 (절대 금지)</td><td>미검증</td><td style="color:var(--yellow)">검증 필요</td></tr>
+    <tr><td>도메인 분배</td><td>직장30/학교20/서비스20/친밀15/자유15</td><td>10개 카테고리 균등</td><td style="color:var(--yellow)">직장/학교 비중 부족</td></tr>
+    <tr><td>발화 대칭성</td><td>1:1 대칭 (Tiki-taka)</td><td>미검증</td><td style="color:var(--yellow)">권력 비대칭 혼입 가능</td></tr>
+    <tr><td>감정 에스칼레이션</td><td>없음 (Flat)</td><td>미검증</td><td style="color:var(--yellow)">위협과 혼동 가능</td></tr>
+  </table>
+
+  <div class="insight">
+    <strong>핵심:</strong> strategy_v1.md에서 가장 강조한 것은 <strong>"일반 대화의 차별점은 (1) 이모티콘 없음 (2) 수평적 관계 (3) 감정 에스칼레이션 없음"</strong>인데, 현재 합성 데이터는 이 3가지를 모두 위반하고 있음.
+  </div>
+</div>
+
+<!-- ===== baseline.csv 분석 ===== -->
+<h2>5. baseline.csv (세션2 데이터) 분석</h2>
+<div class="card">
+  <p>세션2에서 사용한 <code>baseline.csv</code>는 15,000건 균형 데이터:</p>
+  <div class="card-inner">
+    <table style="margin:0">
+      <tr><th>클래스</th><th>건수</th><th>평균 길이</th></tr>
+      <tr><td>갈취 대화</td><td class="num">3,000</td><td class="num">209자</td></tr>
+      <tr><td>기타 괴롭힘 대화</td><td class="num">3,000</td><td class="num">210자</td></tr>
+      <tr><td>일반 대화</td><td class="num">3,000</td><td class="num">174자</td></tr>
+      <tr><td>직장 내 괴롭힘 대화</td><td class="num">3,000</td><td class="num">231자</td></tr>
+      <tr><td>협박 대화</td><td class="num">3,000</td><td class="num">238자</td></tr>
+    </table>
+  </div>
+  <div class="insight danger">
+    <strong>문제:</strong> 이 데이터로 Val F1 0.990을 찍었지만 Test 일반대화는 23건으로 <strong>우리보다 나쁨</strong>. 일반 대화 평균 길이(174자)도 위협 클래스(209~238자)보다 짧아서 여전히 길이 숏컷 우려. 또한 증강된 위협 데이터가 과적합을 유발했을 가능성.
+  </div>
+</div>
+
+<!-- ===== 권장 액션 플랜 ===== -->
+<h2>6. 권장 액션 플랜 (우선순위 순)</h2>
+<div class="card">
+
+  <div class="priority-high">
+    <p><span class="tag tag-red">P0</span> <strong>합성 데이터 이모티콘 제거 후 재학습</strong></p>
+    <p style="color:var(--text2);font-size:0.9em">가장 쉽고 빠른 개선. 정규식 한 줄로 ㅋㅋ/ㅎㅎ/ㅠㅠ 제거 → 재학습. 예상 소요: 40분</p>
+  </div>
+
+  <div class="priority-high">
+    <p><span class="tag tag-red">P0</span> <strong>합성 데이터 도메인 비율 조정 (직장 30% / 학교 20%)</strong></p>
+    <p style="color:var(--text2);font-size:0.9em">Test에서 직장 내 괴롭힘/기타 괴롭힘과 혼동되는 일반 직장/학교 대화 비율 확대. 현재 10% → 30%/20%로.</p>
+  </div>
+
+  <div class="priority-med">
+    <p><span class="tag tag-yellow">P1</span> <strong>max_len=256 학습 완료 (v3 결과 활용)</strong></p>
+    <p style="color:var(--text2);font-size:0.9em">v3(46건)이 현재 최고. 체크포인트가 있으므로 해당 모델로 제출 파일 확인.</p>
+  </div>
+
+  <div class="priority-med">
+    <p><span class="tag tag-yellow">P1</span> <strong>합성 데이터 3,000건으로 확대</strong></p>
+    <p style="color:var(--text2);font-size:0.9em">strategy_v1.md 목표. 위협 클래스 증강(3,000건/클래스)과 균형 맞추기.</p>
+  </div>
+
+  <div class="priority-med">
+    <p><span class="tag tag-yellow">P1</span> <strong>위협 클래스 증강 (패러프레이즈 + 역번역)</strong></p>
+    <p style="color:var(--text2);font-size:0.9em">원본 ~950건 → 3,000건 목표. 문장 셔플은 에스칼레이션 패턴 파괴로 제외.</p>
+  </div>
+
+  <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:16px;margin:12px 0">
+    <p><span class="tag tag-blue">P2</span> <strong>모델 비교 (KcBERT / KLUE-RoBERTa)</strong></p>
+    <p style="color:var(--text2);font-size:0.9em">KcELECTRA 외 다른 모델의 일반 대화 탐지 성능 비교. 앙상블 후보 확보.</p>
+  </div>
+
+  <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:16px;margin:12px 0">
+    <p><span class="tag tag-blue">P2</span> <strong>Focal Loss / Label Smoothing 실험</strong></p>
+    <p style="color:var(--text2);font-size:0.9em">협박↔기타괴롭힘 유사도 0.87로 가장 혼동되는 쌍. Focal Loss로 완화 시도.</p>
+  </div>
+
+</div>
+
+<!-- ===== 제출 전략 ===== -->
+<h2>7. Kaggle 제출 전략</h2>
+<div class="card">
+  <table>
+    <tr><th>순위</th><th>파일</th><th>일반대화 예측</th><th>근거</th></tr>
+    <tr style="background:rgba(16,185,129,0.06)"><td class="num">1</td><td><strong>submission_v3.csv</strong></td><td class="num" style="color:var(--green)">46건</td><td>max_len=256, 합성1200, 현재 최고</td></tr>
+    <tr><td class="num">2</td><td>submission_v4.csv</td><td class="num">38건</td><td>합성1200, max_len=128</td></tr>
+    <tr><td class="num">3</td><td>submission_baseline.csv</td><td class="num">34건</td><td>예측 분포 가장 균등</td></tr>
+    <tr style="background:rgba(239,68,68,0.06)"><td class="num">-</td><td style="color:var(--red)">submit_num_order.csv</td><td style="color:var(--red)">NaN 23건</td><td style="color:var(--red)">제출 금지 (레이블 누락 버그)</td></tr>
+  </table>
+  <div class="insight">
+    <strong>권장:</strong> <code>submission_v3.csv</code>를 먼저 제출하여 리더보드 점수 확인. 이후 이모티콘 제거 + 도메인 조정한 개선 버전으로 재제출.
+  </div>
+</div>
+
+<div class="footer">
+  <p>DKTC 종합 분석 보고서 | 2026-04-23 | 세션1 + 세션2 + strategy_v1.md 통합</p>
+</div>
+
+</div>
+</body>
+</html>

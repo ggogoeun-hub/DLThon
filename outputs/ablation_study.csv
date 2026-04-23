@@ -1,0 +1,7 @@
+exp_id,model,normal_count,augmentation,lr,epochs,max_length,val_f1_macro,val_accuracy,notes,data
+B01,beomi/KcELECTRA-base,694.0,,2e-05,7,128,0.9219184359020448,0.9177679882525698,Baseline CPU - KcELECTRA + synthetic normal 694,
+S01,beomi/KcELECTRA-base,700.0,,2e-05,7,128,0.9221218608443074,0.9178885630498532,v2 synthetic (avg 206 chars) + hard negatives,
+S02,beomi/KcELECTRA-base,1200.0,,2e-05,7,128,0.9209490646097612,0.9247027741083224,1200 synthetic combined + max_len=128,
+S02,beomi/KcELECTRA-base,1200.0,,2e-05,7,128,0.9209490646097612,0.9247027741083224,1200 synthetic combined + save_limit=2,
+S02,beomi/KcELECTRA-base,1200.0,,2e-05,7,256,0.9368548483881554,0.940554821664465,v3: 1200 synthetic + max_len=256,
+B02,beomi/KcELECTRA-base,,경량EDA(삭제+스왑+구두점),2e-05,7,256,0.9902285457391391,0.9902222222222222,"baseline.csv v2 - 이모티콘 제거, 경량 증강","baseline.csv (v2, 15000건)"
