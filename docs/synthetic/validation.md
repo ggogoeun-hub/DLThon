@@ -10,15 +10,15 @@
 
 | 검증 항목 | Pass 기준 | Fail 시 조치 |
 |---|---|---|
-| **글자 수** | 150~400자 | 재생성 |
-| **발화 턴 수** | 8~12턴 | 재생성 |
+| **글자 수** | 100~500자 | 재생성 |
+| **발화 턴 수** | 4~20턴 (도메인별 유연) | 재생성 |
 | **금지 단어** | BANNED_WORDS 미포함 | 즉시 폐기 |
 | **이모티콘** | ㅋ/ㅎ/ㅠ/ㅜ 2연속 없음 | 정규식 제거 후 재검증 |
 | **말줄임** | ... 없음 | 제거 후 재검증 |
-| **발화 대칭비** | < 1.5 | 재생성 |
-| **존댓말 비대칭** | < 0.3 | 재생성 |
-| **굴복 표현** | < 1회/대화 | 재생성 |
-| **비속어** | 0회 | 즉시 폐기 |
+| **발화 대칭비** | < 1.5 (신고/상담은 < 2.0) | 재생성 |
+| **존댓말 비대칭** | < 0.3 (부모-자녀/알바는 유연) | 재생성 |
+| **굴복 표현** | < 1회/대화 (알바/서비스 "죄송합니다" 허용) | 재생성 |
+| **비속어** | 빈도 제어: "새끼" 30건 중 4~5건, "씨발" 0~1건 | 빈도 초과 시 폐기 |
 
 ### 통계 검증 (배치 단위)
 
@@ -44,8 +44,12 @@
 import re
 import numpy as np
 
-BANNED_WORDS = ['죽여', '죽어', '맞을래', '시키는 대로', '내놔', '닥쳐', '패버릴']
-PROFANITY = ['씨발', '병신', '개새끼', '미친놈', '꺼져']
+# 금지 단어 — 정확 매칭 (관용 표현 "죽을래", "죽겠다" 등은 허용)
+BANNED_WORDS = ['죽여버린다', '죽여줄까', '칼로 찌른다', '시키는 대로', '내놔', '닥쳐', '패버릴']
+# 비속어 — v2에서 빈도 제어하에 허용 (배치 단위로 검증)
+# "새끼": 30건 중 4~5건 OK, "씨발": 30건 중 0~1건 OK
+PROFANITY_HARD_BAN = ['개새끼']  # 이것만 즉시 폐기
+PROFANITY_FREQ_CTRL = ['씨발', '시발', '병신', '미친놈']  # 배치 빈도로 관리
 EMO_RE = re.compile(r'[ㅋㅎㅠㅜ]{2,}')
 ELLIPSIS_RE = re.compile(r'\.{2,}')
 
@@ -59,16 +63,20 @@ def validate_single(text):
     issues = []
     
     # 1. 길이
-    if len(text) < 150 or len(text) > 400:
+    if len(text) < 100 or len(text) > 500:
         issues.append(f'길이: {len(text)}자')
     
-    # 2. 턴 수
+    # 2. 턴 수 (공백 구분 대화는 턴 수 검증 스킵)
     turns = [t.strip() for t in text.split('\n') if t.strip()]
-    if len(turns) < 6 or len(turns) > 14:
-        issues.append(f'턴수: {len(turns)}')
+    if len(turns) > 1:  # \n으로 구분된 경우만
+        if len(turns) < 4 or len(turns) > 22:
+            issues.append(f'턴수: {len(turns)}')
     
-    # 3. 금지 단어
-    for word in BANNED_WORDS + PROFANITY:
+    # 3. 금지 단어 (정확 매칭)
+    for word in BANNED_WORDS:
+        if word in text:
+            issues.append(f'금지어: {word}')
+    for word in PROFANITY_HARD_BAN:
         if word in text:
             issues.append(f'금지어: {word}')
     

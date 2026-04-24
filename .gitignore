@@ -8,3 +8,4 @@ __pycache__/
 outputs/kcelectra-*/
 
 # 대용량 파일 (100MB 이상만 제외)
+outputs/roberta-B04/

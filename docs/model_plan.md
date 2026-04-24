@@ -19,24 +19,26 @@
 
 ## 1. 모델 선정
 
-### 1-1. 선정 모델: `klue/roberta-base`
+### 1-1. 선정 모델: `klue/roberta-base` (B04~)
 
-| 비교 항목 | KLUE-BERT-base | **KLUE-RoBERTa-base** (선정) | KLUE-RoBERTa-large |
-|---|---|---|---|
-| 한국어 사전학습 | ✅ | ✅ | ✅ |
-| 구어체/대화 이해 | 보통 | **우수** | 우수 |
-| 학습 속도 | 빠름 | 빠름 | **느림** |
-| 메모리 사용 | 110M params | 110M params | 330M params |
-| Ablation 반복 가능성 | ✅ | ✅ | ❌ (GPU 부담) |
+| 비교 항목 | KcELECTRA-base (B01~B03) | **KLUE-RoBERTa-base** (B04~) |
+|---|---|---|
+| 사전학습 데이터 | 한국어 댓글/구어체 | 뉴스+위키+댓글 (균형) |
+| 사전학습 방식 | RTD (단어 수준 판별) | MLM + Dynamic Masking (**문맥 파악**) |
+| 구어체 이해 | ✅ 강점 | 보통 |
+| **문장 간 관계/맥락** | 보통 | **✅ 강점 (NSP 제거로 문맥 집중)** |
+| 파라미터 | 109M | 110M |
+| KLUE NLI/STS | 약간 낮음 | **상위** |
 
-**선정 근거**:
-1. RoBERTa는 NSP 제거 + Dynamic Masking으로 BERT 대비 **문맥 파악 능력이 우수**
-2. `base` 모델(110M)은 Ablation Study에서 실험을 6회 이상 반복하기에 충분히 가벼움
-3. KLUE 벤치마크에서 한국어 NLU 태스크 최상위권 성능
+**B04에서 모델 변경 근거**:
+1. B01~B03의 핵심 실패 원인: "같은 단어인데 맥락이 다른 것"을 구분 못함 (죽겠다=비유 vs 죽여=위협)
+2. RoBERTa는 NSP 제거 + Dynamic Masking으로 **문장 간 관계·맥락 파악에 강점**
+3. KcELECTRA의 RTD는 단어 수준 진위 판별에 편향 → 문체 숏컷의 원인 중 하나
+4. `base` 모델(110M)은 CPU 학습에서 KcELECTRA와 속도 동등
 
 ### 1-2. 대안 모델 (Ablation용)
-- **`monologg/koelectra-base-v3-discriminator`**: ELECTRA 기반, 효율적 사전학습으로 소규모 데이터에 강점
-- 베이스라인 F1이 기대 이하일 경우 비교 실험 대상
+- **`beomi/KcELECTRA-base`**: B01~B03에서 사용. 구어체에 강점. 비교 실험 대상
+- **`snunlp/KR-ELECTRA-discriminator`**: 또 다른 ELECTRA 변종. 소규모 데이터 강점
 
 ---
 
@@ -48,7 +50,7 @@
 # Cell 1: 데이터 로드
 import pandas as pd
 
-train_df = pd.read_csv('data/baseline.csv')  # 팀원이 만든 최종 학습 데이터
+train_df = pd.read_csv('data/baseline/baseline_B04.csv')  # B04: v2 전략 기반 15,000건
 
 # 클래스 분포 확인
 print(train_df['class'].value_counts())
@@ -62,10 +64,12 @@ print(f"총 데이터: {len(train_df)}건")
 label2id = {
     '갈취 대화': 0,
     '기타 괴롭힘 대화': 1,
-    '직장 내 괴롭힘 대화': 2,
-    '협박 대화': 3,
-    '일반 대화': 4,
+    '일반 대화': 2,
+    '직장 내 괴롭힘 대화': 3,
+    '협박 대화': 4,
 }
+# ⚠️ 주의: Kaggle 제출 시 문자열/숫자 매핑 확인 필수
+# train.csv 등장 순서(협박=0, 기타=1, 갈취=2, 직장=3)와 다름
 id2label = {v: k for k, v in label2id.items()}
 
 train_df['label'] = train_df['class'].map(label2id)
@@ -83,15 +87,16 @@ train_df['label'] = train_df['class'].map(label2id)
 import re
 
 def preprocess(text):
-    """최소한의 전처리 — 모델이 원문 문맥을 최대한 활용하도록"""
-    text = re.sub(r'\n+', ' [SEP] ', text)  # 발화 구분을 [SEP]으로 치환
+    """Train/Test 포맷 통일 — \n을 공백으로 변환"""
+    text = str(text).replace('\n', ' ')       # newline → 공백
     text = re.sub(r'\s+', ' ', text).strip()  # 연속 공백 정리
     return text
 
 train_df['text'] = train_df['conversation'].apply(preprocess)
 ```
 
-**발화 구분 전략**: `\n`을 `[SEP]` 토큰으로 치환하면, RoBERTa가 대화의 턴 경계를 인식할 수 있습니다.
+**발화 구분 전략**: `\n`을 공백으로 변환. Train(100% \n) vs Test(95% 공백) 포맷 불일치 해소.
+> `[SEP]` 방식은 BERT/ELECTRA의 세그먼트 구분과 의미 충돌 우려로 B01에서 기각 (strategy_v1 참고)
 
 ### 2-4. Train/Validation 분할
 
@@ -119,10 +124,10 @@ print(f"Train: {len(train_texts)}, Val: {len(val_texts)}")
 # Cell 5: 토크나이저 설정
 from transformers import AutoTokenizer
 
-MODEL_NAME = 'klue/roberta-base'
+MODEL_NAME = 'klue/roberta-base'  # B04~: KcELECTRA → RoBERTa 변경
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
-MAX_LEN = 256  # EDA: median=203자, 75%=270자 → 256 토큰이면 대부분 커버
+MAX_LEN = 256  # S02b에서 128→256 +1.6%p 확인. 커버율 99.4%
 ```
 
 **`MAX_LEN = 256` 근거**:
@@ -200,20 +205,24 @@ class ConversationClassifier(nn.Module):
 
 ```python
 # Cell 8: 학습 설정
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 LEARNING_RATE = 2e-5
-EPOCHS = 5
+EPOCHS = 7
 WARMUP_RATIO = 0.1
 WEIGHT_DECAY = 0.01
+LABEL_SMOOTHING = 0.1
 ```
 
 | 파라미터 | 값 | 근거 |
 |---|---|---|
-| Batch Size | 32 | MAX_LEN=256 기준 GPU 메모리 최적. 16도 가능 (GPU 환경에 따라) |
-| Learning Rate | 2e-5 | BERT/RoBERTa fine-tuning 표준 범위(1e-5 ~ 5e-5) |
-| Epochs | 5 | 데이터 ~5,000건 → 3~5 에폭에서 수렴 예상. Early Stopping으로 보완 |
+| Batch Size | 16 | CPU 학습 기준 최적. Dynamic Padding 사용 |
+| Learning Rate | 2e-5 | BERT/RoBERTa fine-tuning 표준 범위 |
+| Epochs | 7 + EarlyStopping(patience=3) | B03에서 7에폭 완주 확인. 조기 종료로 과적합 방지 |
 | Warmup | 10% | 학습 초기 불안정 방지 |
-| Weight Decay | 0.01 | L2 정규화로 과적합 억제 |
+| Weight Decay | 0.01 | L2 정규화 |
+| Label Smoothing | 0.1 | B03에서 도입. 과신 방지 (Val 맹신 교훈) |
+| Dynamic Padding | DataCollatorWithPadding | max_length padding 대비 학습 속도 향상 |
+| Val Split | 0.15 (stratified) | 데이터가 적으므로 학습 데이터 확보 우선 |
 
 ### 4-2. 옵티마이저 & 스케줄러
 
@@ -234,12 +243,8 @@ scheduler = get_linear_schedule_with_warmup(
 
 ```python
 # Cell 10: 손실 함수
-criterion = nn.CrossEntropyLoss()
-
-# [선택] 클래스 불균형이 심할 경우 가중치 적용
-# EDA 기준 클래스당 ~1,000건이지만, 합성 데이터 품질에 따라 달라질 수 있음
-# class_weights = torch.tensor([...], dtype=torch.float).to(device)
-# criterion = nn.CrossEntropyLoss(weight=class_weights)
+criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
+# B03에서 Label Smoothing 0.1 도입 — 과신 방지 (Val 99% → Test 0.03 교훈)
 ```
 
 ---
@@ -445,18 +450,19 @@ print(submission['class'].value_counts())
 | S02 | 합성 양 | 합성 1,200건 | 0.921 | 38건 | 양 확대 미미한 효과 |
 | S02b | MAX_LEN | 128 → 256 | 0.937 | — | +1.6%p, max_len=256 확정 |
 | B02 | 대규모 증강 | 15k 균형, 경량 EDA 증강 | 0.990 | 23건 | 문체 숏컷 과적합 |
+| B03 | 문체 보정 + Label Smoothing | 15k, 마침표/존댓말 보정 | 0.991 | 32건 | 개선됐지만 도메인 공백 |
 
 ### 예정 실험
 
 | ID | 변수 | 조건 | 비고 |
 |---|---|---|---|
-| **B04** | v2 전략 데이터 | baseline_B04.csv (gem_prompt_v2 기반 15k) | strategy_v2.md |
+| **B04** | v2 전략 + RoBERTa | baseline_B04.csv + klue/roberta-base | strategy_v2, 33도메인 합성, 모델 변경 |
 | Exp-A1 | MAX_LEN | 256 / 384 / 512 | S02b에서 256 효과 확인. 추가 실험 |
 | Exp-A2 | Dropout | 0.1 / 0.3 / 0.5 | — |
 | Exp-A3 | 전처리 | `\n` → 공백 (확정) vs `[TURN]` special token | v1에서 공백 확정. [TURN] 추가 실험 |
 | Exp-A4 | 손실 함수 | CE vs Focal Loss vs Label Smoothing | 협박↔기타괴롭힘 유사도 0.87 |
-| Exp-A5 | 모델 비교 | KcELECTRA vs KLUE-RoBERTa vs KcBERT | 앙상블 후보 확보 |
-| Exp-A6 | 풀링 | [CLS] vs Mean Pooling vs Attention Pooling | 후반부 위협 패턴 포착 |
+| Exp-A5 | 모델 비교 | KcELECTRA vs KLUE-RoBERTa | B04에서 RoBERTa 채택. 비교 실험 |
+| Exp-A6 | 풀링 / Multi-head | [CLS] vs Ending Pooling + Speaker-Aware | [`model_context_design.md`](model_context_design.md) 참고 |
 | E01 | 앙상블 | 상위 2~3 모델 soft voting | — |
 
 ### 실험 우선순위 (시간 제한 시)

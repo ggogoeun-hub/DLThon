@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[DLThon] B04 설계 근거 — 왜 이 데이터, 왜 이 모델인가</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e17;--card:#1a2332;--card2:#141e2d;--border:#2a3545;--text:#e2e8f0;--text2:#8892a4;--cyan:#06b6d4;--yellow:#f59e0b;--red:#ef4444;--blue:#3b82f6;--green:#10b981;--purple:#a78bfa}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.7;padding:40px 20px}
+.container{max-width:880px;margin:0 auto}
+h1{font-size:26px;font-weight:700;color:var(--cyan);margin-bottom:6px}
+h2{font-size:19px;font-weight:600;color:var(--cyan);margin:36px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+h3{font-size:15px;font-weight:600;color:var(--yellow);margin:20px 0 10px}
+.sub{color:var(--text2);font-size:13px;margin-bottom:28px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;margin:14px 0}
+.card2{background:var(--card2);border-radius:8px;padding:14px;margin:10px 0}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
+th{background:var(--card2);color:var(--cyan);font-weight:600;text-align:left;padding:8px 10px;border-bottom:2px solid var(--border)}
+td{padding:7px 10px;border-bottom:1px solid var(--border)}
+.mono{font-family:'JetBrains Mono',monospace;font-size:13px}
+.green{color:var(--green)}.red{color:var(--red)}.yellow{color:var(--yellow)}.cyan{color:var(--cyan)}.blue{color:var(--blue)}.purple{color:var(--purple)}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;margin:2px}
+.tag-red{background:rgba(239,68,68,0.15);color:var(--red)}
+.tag-green{background:rgba(16,185,129,0.15);color:var(--green)}
+.tag-yellow{background:rgba(245,158,11,0.15);color:var(--yellow)}
+.tag-blue{background:rgba(59,130,246,0.15);color:var(--blue)}
+.tag-purple{background:rgba(167,139,250,0.15);color:var(--purple)}
+.insight{border-left:3px solid var(--yellow);padding:10px 14px;margin:12px 0;background:rgba(245,158,11,0.05);border-radius:0 8px 8px 0}
+.danger{border-left:3px solid var(--red);padding:10px 14px;margin:12px 0;background:rgba(239,68,68,0.05);border-radius:0 8px 8px 0}
+.ok{border-left:3px solid var(--green);padding:10px 14px;margin:12px 0;background:rgba(16,185,129,0.05);border-radius:0 8px 8px 0}
+code{font-family:'JetBrains Mono',monospace;background:var(--card2);padding:1px 5px;border-radius:3px;font-size:12px}
+.flow{font-size:13px;margin:12px 0}
+.flow .arrow{color:var(--cyan);margin:0 6px;font-weight:700}
+.footer{text-align:center;color:var(--text2);font-size:12px;margin-top:40px;padding-top:20px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>[DLThon] B04 설계 근거 보고서</h1>
+<p class="sub">"왜 이 데이터, 왜 이 모델인가" — 6번의 실험에서 도출된 의사결정 로직 &nbsp;|&nbsp; 2026-04-23</p>
+
+<!-- ====== 1. 한 줄 요약 ====== -->
+<div class="card">
+  <h3 style="margin-top:0">B04 = 무엇이 바뀌었나</h3>
+  <table>
+    <tr><th></th><th>B01~B03</th><th>B04 (현재 학습 중)</th></tr>
+    <tr><td><strong>모델</strong></td><td>KcELECTRA-base</td><td class="green"><strong>KLUE-RoBERTa-base</strong></td></tr>
+    <tr><td><strong>합성 전략</strong></td><td>v1: Top-Down (위협의 반대)</td><td class="green"><strong>v2: Bottom-Up (실제 일반 대화 재현)</strong></td></tr>
+    <tr><td><strong>합성 도메인</strong></td><td>5개 카테고리</td><td class="green"><strong>33개 세분화 도메인</strong></td></tr>
+    <tr><td><strong>합성 도구</strong></td><td>Python 스크립트 직접 작성</td><td class="green"><strong>Gemini Flash + gem_prompt_v2</strong></td></tr>
+    <tr><td><strong>비속어</strong></td><td>절대 금지</td><td class="green"><strong>빈도 제어 허용</strong></td></tr>
+    <tr><td><strong>Label Smoothing</strong></td><td>B02 없음 / B03 0.1</td><td class="green"><strong>0.1</strong></td></tr>
+  </table>
+</div>
+
+<!-- ====== 2. 데이터 설계 ====== -->
+<h2>1. 데이터는 왜 이렇게 만들었나</h2>
+
+<div class="card">
+  <h3 style="margin-top:0">출발점: B02의 참사</h3>
+  <p>15,000건으로 학습 → Val F1 <strong>99.02%</strong> → Kaggle Test F1 <strong>0.03</strong></p>
+  <div class="danger">
+    모델이 대화 "내용"이 아니라 합성 데이터의 "문체"를 학습했다.
+    <table style="margin-top:8px">
+      <tr><th>숏컷</th><th>합성 일반</th><th>위협</th><th>모델이 배운 규칙</th></tr>
+      <tr><td>마침표</td><td class="mono red">0.38개</td><td class="mono">6.18개</td><td>"마침표 없으면 일반"</td></tr>
+      <tr><td>존댓말</td><td class="mono red">0.83회</td><td class="mono">4.05회</td><td>"반말이면 일반"</td></tr>
+      <tr><td>느낌표</td><td class="mono red">0.04개</td><td class="mono">1.15개</td><td>"느낌표 없으면 일반"</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">전략 전환: Top-Down → Bottom-Up</h3>
+  <div class="card2">
+    <p><span class="tag tag-red">v1 (실패)</span> "위협을 분석해서 반대를 만들자"</p>
+    <p style="font-size:13px;color:var(--text2)">→ 위협에 없는 특성(반말, 구두점 없음)으로 합성 → 문체 숏컷 유발</p>
+  </div>
+  <div class="card2">
+    <p><span class="tag tag-green">v2 (B04)</span> <strong>"실제 일반 대화가 뭔지 파악하고 재현하자"</strong></p>
+    <p style="font-size:13px;color:var(--text2)">→ test 일반 대화 104건 분석(correct.md) → 실제 특성을 33도메인으로 재현</p>
+  </div>
+  <div class="insight">
+    <strong>핵심 발견</strong> (correct.md): 실제 일반 대화에는 비속어("야 새끼 빨리 나와"), 관용 위협("야 죽을래"), 119 신고 전화가 포함됨. v1에서 이 모든 것을 금지했기 때문에 모델이 이런 test 데이터를 위협으로 오분류.
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">33개 도메인 설계 — 왜 5개에서 33개로?</h3>
+  <p style="font-size:13px;color:var(--text2);margin-bottom:10px">B03 심층 분석에서 모델이 실패하는 3가지 패턴을 발견. 각 패턴에 대응하는 도메인을 설계.</p>
+
+  <div class="card2">
+    <p><span class="tag tag-red">실패 패턴 A</span> <strong>비유적 위협 표현</strong> → "죽겠다"(피곤) 를 협박으로 분류</p>
+    <p style="font-size:13px">→ <span class="tag tag-green">대응 도메인</span> P09(술자리), P20(야근 불만), P22(취업 스트레스) — 과장된 하소연 포함</p>
+  </div>
+
+  <div class="card2">
+    <p><span class="tag tag-purple">실패 패턴 B</span> <strong>신고/긴급 대화</strong> → "화재 발생" 신고를 협박으로 분류</p>
+    <p style="font-size:13px">→ <span class="tag tag-green">대응 도메인</span> P29(119 화재/사고), P30(112 분실/사건) — v1에 전혀 없던 유형</p>
+  </div>
+
+  <div class="card2">
+    <p><span class="tag tag-blue">실패 패턴 C</span> <strong>돈/직장 맥락 일상</strong> → "지갑 분실 15만원"을 갈취로 분류</p>
+    <p style="font-size:13px">→ <span class="tag tag-green">대응 도메인</span> P12(친구 간 돈 얘기 HN), P15(커플 다툼 HN), P17(형제 대화 HN)</p>
+  </div>
+
+  <table style="margin-top:12px">
+    <tr><th>Group</th><th>도메인 수</th><th>건수</th><th>역할</th></tr>
+    <tr><td><span class="cyan">A. 친구 수다</span></td><td>13개</td><td class="mono">~1,183</td><td>음식, 게임, 쇼핑, 돈(HN) 등 일상 커버</td></tr>
+    <tr><td><span class="purple">B. 커플/가족</span></td><td>5개</td><td class="mono">~455</td><td>부모-자녀, 형제(HN), 커플 다툼(HN)</td></tr>
+    <tr><td><span class="yellow">C. 직장인</span></td><td>5개</td><td class="mono">~455</td><td>꼰대 뒷담, 야근 불만, 알바 — 비유적 위협 포함</td></tr>
+    <tr><td><span class="blue">D. 온라인/일상</span></td><td>5개</td><td class="mono">~455</td><td>카톡, 동창, 택배, 건강, 이사</td></tr>
+    <tr><td><span class="red">E. 신고/상담</span></td><td>5개</td><td class="mono">~455</td><td>119, 112, 감정 상담 — 패턴 B 대응</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">합성 품질 — 숏컷 해소 검증</h3>
+  <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Gemini Flash로 1,010건 생성 → 정제 후 975건 → 경량 증강 → 3,000건</p>
+  <table>
+    <tr><th>지표</th><th>v1 합성 (B02)</th><th>v2 합성 (B04)</th><th>test</th><th>숏컷 위험</th></tr>
+    <tr><td>마침표</td><td class="mono red">0.38</td><td class="mono green">4.9</td><td class="mono">4.99</td><td>✅ <strong>해소</strong> (0.38→4.9)</td></tr>
+    <tr><td>존댓말</td><td class="mono red">0.83</td><td class="mono green">3.7</td><td class="mono">3.77</td><td>✅ <strong>해소</strong> (0.83→3.7)</td></tr>
+    <tr><td>느낌표</td><td class="mono red">0.04</td><td class="mono green">1.9</td><td class="mono">0.85</td><td>✅ 범위 내</td></tr>
+    <tr><td>길이</td><td class="mono red">174자</td><td class="mono green">254자</td><td class="mono">212자</td><td>✅ 해소</td></tr>
+    <tr><td>이모티콘</td><td class="mono">0</td><td class="mono green">0</td><td class="mono">0</td><td>✅</td></tr>
+  </table>
+  <div class="ok">B02에서 ×16배 차이였던 마침표가 test와 0.09 차이로 수렴. B02의 핵심 숏컷 원인이 제거됨.</div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">증강 규칙 — B02 교훈 반영</h3>
+  <table>
+    <tr><th>기법</th><th>B02</th><th>B04</th><th>근거</th></tr>
+    <tr><td>랜덤 삭제</td><td>✅</td><td>✅</td><td>경량, 검증됨</td></tr>
+    <tr><td>랜덤 스왑</td><td>✅</td><td>✅</td><td>경량, 보존 키워드 보호</td></tr>
+    <tr><td>구두점 변형</td><td>✅</td><td>✅</td><td>경량</td></tr>
+    <tr><td class="red">동의어 교체</td><td>✅</td><td class="red">❌ 삭제</td><td>B02에서 비문 생성 확인</td></tr>
+    <tr><td class="red">랜덤 삽입</td><td>✅</td><td class="red">❌ 삭제</td><td>B02에서 비문 생성 확인</td></tr>
+    <tr><td class="red">문장 셔플</td><td>원본에 있었음</td><td class="red">❌ 삭제</td><td>에스칼레이션 패턴 파괴 (EDA 모순)</td></tr>
+  </table>
+</div>
+
+<!-- ====== 3. 모델 선택 ====== -->
+<h2>2. 모델은 왜 RoBERTa인가</h2>
+
+<div class="card">
+  <h3 style="margin-top:0">B01~B03의 근본 한계</h3>
+  <div class="danger">
+    B03 심층 분석: 위협 키워드 없는데 위협으로 분류된 건 = <strong>239/468건 (51%)</strong><br>
+    → 모델이 단어가 아닌 <strong>문체 패턴</strong>으로 분류. 맥락(누가→누구에게, 의도, 결말)을 파악 못함.
+  </div>
+
+  <div class="card2">
+    <p>같은 단어, 다른 맥락 — KcELECTRA가 구분 못하는 사례:</p>
+    <table>
+      <tr><th>텍스트</th><th>실제</th><th>KcELECTRA 판단</th></tr>
+      <tr><td>"일 때문에 <strong>죽겠다</strong>"</td><td>업무 스트레스 (일반)</td><td class="red">협박</td></tr>
+      <tr><td>"지갑 잃어버렸다 <strong>15만원</strong>"</td><td>분실 (일반)</td><td class="red">갈취</td></tr>
+      <tr><td>"좋은 아침입니다 <strong>대표님</strong>"</td><td>직장 인사 (일반)</td><td class="red">괴롭힘</td></tr>
+      <tr><td>"<strong>화재</strong> 발생 119 소방대"</td><td>신고 (일반)</td><td class="red">협박</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">KcELECTRA vs KLUE-RoBERTa — 구조적 차이</h3>
+  <table>
+    <tr><th></th><th>KcELECTRA (B01~B03)</th><th>KLUE-RoBERTa (B04)</th></tr>
+    <tr><td><strong>사전학습 방식</strong></td><td>RTD (Replaced Token Detection)</td><td class="green"><strong>MLM + Dynamic Masking</strong></td></tr>
+    <tr><td><strong>학습 신호</strong></td><td>"이 단어가 진짜인가 가짜인가"</td><td class="green"><strong>"빈칸에 어떤 단어가 올까"</strong></td></tr>
+    <tr><td><strong>강점</strong></td><td>단어 수준 이상 탐지</td><td class="green"><strong>문장 간 관계/맥락 파악</strong></td></tr>
+    <tr><td><strong>NSP 태스크</strong></td><td>—</td><td class="green"><strong>제거 → 문맥 집중</strong></td></tr>
+    <tr><td><strong>KLUE NLI/STS</strong></td><td>약간 낮음</td><td class="green"><strong>상위</strong></td></tr>
+    <tr><td><strong>파라미터</strong></td><td>109M</td><td>110M (동등)</td></tr>
+  </table>
+
+  <div class="insight">
+    <strong>선택 근거</strong>: 우리 과제의 핵심은 "같은 단어가 다른 맥락에서 쓰일 때 구분하는 것".
+    <ul style="margin:8px 0;padding-left:20px;font-size:13px">
+      <li>KcELECTRA의 RTD는 <strong>단어 수준 판별</strong>에 편향 → 문체 숏컷의 원인</li>
+      <li>RoBERTa의 MLM + Dynamic Masking은 <strong>주변 문맥에서 의미를 추론</strong>하도록 학습</li>
+      <li>"죽겠다" 주변에 "일", "피곤" 이 있으면 비유, "칼", "살려" 가 있으면 위협 — 이 구분은 문맥 파악 능력에 의존</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ====== 4. 하이퍼파라미터 ====== -->
+<h2>3. 하이퍼파라미터 — 왜 이 값인가</h2>
+
+<div class="card">
+  <table>
+    <tr><th>파라미터</th><th>값</th><th>설정 근거</th></tr>
+    <tr><td><strong>MAX_LENGTH</strong></td><td class="mono">256</td><td>S02b에서 128→256 변경만으로 +1.6%p. 커버율 97.6%</td></tr>
+    <tr><td><strong>Batch Size</strong></td><td class="mono">16</td><td>CPU 학습 최적. Dynamic Padding으로 실효 속도 향상</td></tr>
+    <tr><td><strong>Learning Rate</strong></td><td class="mono">2e-5</td><td>RoBERTa fine-tuning 표준 범위</td></tr>
+    <tr><td><strong>Epochs</strong></td><td class="mono">7 + ES(3)</td><td>B03에서 7에폭 완주(과적합 없음). EarlyStopping patience=3</td></tr>
+    <tr><td><strong>Label Smoothing</strong></td><td class="mono">0.1</td><td>B02 교훈: Val 99%→Test 0.03. 과신 방지</td></tr>
+    <tr><td><strong>Val Split</strong></td><td class="mono">0.15</td><td>15,000건 중 학습 데이터 확보 우선 (12,750/2,250)</td></tr>
+    <tr><td><strong>Dynamic Padding</strong></td><td>DataCollator</td><td>max_length padding 대비 학습 속도 향상</td></tr>
+    <tr><td><strong>전처리</strong></td><td><code>\n → 공백</code></td><td>Train(100% \n) vs Test(95% 공백) 포맷 통일</td></tr>
+  </table>
+
+  <div class="card2">
+    <strong>각 값이 확정된 실험</strong>
+    <div class="flow" style="text-align:left">
+      MAX_LENGTH=256 ← <span class="tag tag-blue">S02b</span> (+1.6%p 확인)<br>
+      Label Smoothing=0.1 ← <span class="tag tag-yellow">B03</span> (일반 23→32건 개선)<br>
+      \n→공백 ← <span class="tag tag-green">B01</span> (Train-Test 구조 검증에서 확정)<br>
+      EarlyStopping(3) ← <span class="tag tag-green">B03</span> (7에폭 완주, 과적합 없음 확인)<br>
+      동의어교체/삽입 삭제 ← <span class="tag tag-red">B02</span> (비문 생성 확인)
+    </div>
+  </div>
+</div>
+
+<!-- ====== 5. 의사결정 트리 ====== -->
+<h2>4. 의사결정 흐름 — 전체 로직</h2>
+
+<div class="card">
+  <pre style="font-family:'JetBrains Mono';font-size:12px;color:var(--text2);line-height:2.0">
+B01 (KcELECTRA + 합성 694건)
+  │  Val 0.922, Test 일반 34건
+  │  → 합성 길이가 짧다 (139자)
+  │
+S01 (길이 개선 206자)
+  │  Val 0.922, Test 35건
+  │  → <span class="red">❌ 길이만으로는 부족</span>
+  │
+S02 (합성 1,200건)
+  │  Val 0.921, Test 38건
+  │  → <span class="yellow">⚠️ 양 확대도 미미</span>
+  │
+S02b (MAX_LEN 256)
+  │  Val 0.937
+  │  → <span class="green">✅ +1.6%p! MAX_LEN=256 확정</span>
+  │
+B02 (15,000건 대규모 증강)
+  │  Val <span class="green">0.990</span>, Kaggle <span class="red">0.03</span>, Test 일반 <span class="red">23건</span>
+  │  → <span class="red">🔴 문체 숏컷 발견! 마침표/존댓말 극단적 차이</span>
+  │  → <span class="red">🔴 이모티콘 42.6% → 숏컷 위험</span>
+  │  → <span class="red">🔴 증강 비문 (동의어교체/삽입)</span>
+  │
+  ├─ 교훈 1: <span class="yellow">Val 맹신 금지</span>
+  ├─ 교훈 2: <span class="yellow">합성 데이터 문체 = 실제 분포와 일치 필수</span>
+  ├─ 교훈 3: <span class="yellow">동의어교체/삽입 → 비문. 경량 증강만</span>
+  │
+B03 (문체 보정 + Label Smoothing)
+  │  Val 0.991, Test 일반 <span class="yellow">32건</span>
+  │  → 개선됐지만 부족
+  │  → <span class="yellow">심층 분석: 3가지 실패 패턴 발견</span>
+  │     A. 비유적 위협 ("죽겠다" = 피곤)
+  │     B. 신고/긴급 (119 화재)
+  │     C. 돈/직장 일상 (지갑 분실)
+  │  → <span class="yellow">위협 키워드 없이 위협 분류: 51%</span>
+  │  → <span class="yellow">맥락 파악 능력 부족 → 모델 변경 필요</span>
+  │
+  ├─ 결정 1: <span class="green">strategy v2 (Bottom-Up) 전환</span>
+  ├─ 결정 2: <span class="green">33도메인 세분화 (실패 패턴 대응)</span>
+  ├─ 결정 3: <span class="green">KcELECTRA → RoBERTa (맥락 파악)</span>
+  │
+<span class="green">B04 (v2 전략 + RoBERTa) ← 현재 학습 중</span>
+  │  데이터: baseline_B04.csv (33도메인 Gemini 합성, 15k)
+  │  모델: klue/roberta-base
+  │  기대: 문체 숏컷 해소 + 맥락 파악 강화
+  </pre>
+</div>
+
+<!-- ====== 6. 검증 계획 ====== -->
+<h2>5. B04 완료 후 검증 계획</h2>
+
+<div class="card">
+  <table>
+    <tr><th>검증 항목</th><th>기준</th><th>근거</th></tr>
+    <tr><td><strong>Test 일반대화 예측 수</strong></td><td>B03 32건 대비 증가?</td><td>핵심 지표</td></tr>
+    <tr><td><strong>위협 키워드 없이 위협 분류 비율</strong></td><td>B03 51% 대비 감소?</td><td>맥락 파악 능력 측정</td></tr>
+    <tr><td><strong>경계 사례 수</strong></td><td>B03 6건 대비 증가?</td><td>결정 경계 유연성</td></tr>
+    <tr><td><strong>일반확률 &lt;5% 비율</strong></td><td>B03 92% 대비 감소?</td><td>과신 정도</td></tr>
+    <tr><td><strong>Kaggle F1</strong></td><td>B02 0.03 대비 개선?</td><td>실제 성능</td></tr>
+  </table>
+  <div class="insight">
+    Val F1이 낮아지더라도 Test 일반대화 예측이 늘어나면 성공. <strong>Val은 참고, Test가 진실</strong>.
+  </div>
+</div>
+
+<div class="footer">
+  DLThon — B04 설계 근거 보고서 &nbsp;|&nbsp; 2026-04-23 &nbsp;|&nbsp; 현재 학습 진행 중 (~4.5시간 예상)
+</div>
+
+</div>
+</body>
+</html>

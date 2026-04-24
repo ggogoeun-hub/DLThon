@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[DLThon] 전략 종합 보고서 — 지금까지 & 앞으로</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e17;--card:#1a2332;--card2:#141e2d;--border:#2a3545;--text:#e2e8f0;--text2:#8892a4;--cyan:#06b6d4;--yellow:#f59e0b;--red:#ef4444;--blue:#3b82f6;--green:#10b981;--purple:#a78bfa}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.7;padding:40px 20px}
+.container{max-width:900px;margin:0 auto}
+h1{font-size:26px;font-weight:700;color:var(--cyan);margin-bottom:6px}
+h2{font-size:19px;font-weight:600;color:var(--cyan);margin:36px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+h3{font-size:15px;font-weight:600;color:var(--yellow);margin:20px 0 10px}
+.sub{color:var(--text2);font-size:13px;margin-bottom:28px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;margin:14px 0}
+.card2{background:var(--card2);border-radius:8px;padding:14px;margin:10px 0}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
+th{background:var(--card2);color:var(--cyan);font-weight:600;text-align:left;padding:8px 10px;border-bottom:2px solid var(--border)}
+td{padding:7px 10px;border-bottom:1px solid var(--border)}
+.mono{font-family:'JetBrains Mono',monospace;font-size:13px}
+.green{color:var(--green)}.red{color:var(--red)}.yellow{color:var(--yellow)}.cyan{color:var(--cyan)}.blue{color:var(--blue)}.purple{color:var(--purple)}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;margin:2px}
+.tag-red{background:rgba(239,68,68,0.15);color:var(--red)}
+.tag-green{background:rgba(16,185,129,0.15);color:var(--green)}
+.tag-yellow{background:rgba(245,158,11,0.15);color:var(--yellow)}
+.tag-blue{background:rgba(59,130,246,0.15);color:var(--blue)}
+.tag-purple{background:rgba(167,139,250,0.15);color:var(--purple)}
+.insight{border-left:3px solid var(--yellow);padding:10px 14px;margin:12px 0;background:rgba(245,158,11,0.05);border-radius:0 8px 8px 0}
+.danger{border-left:3px solid var(--red);padding:10px 14px;margin:12px 0;background:rgba(239,68,68,0.05);border-radius:0 8px 8px 0}
+.ok{border-left:3px solid var(--green);padding:10px 14px;margin:12px 0;background:rgba(16,185,129,0.05);border-radius:0 8px 8px 0}
+code{font-family:'JetBrains Mono',monospace;background:var(--card2);padding:1px 5px;border-radius:3px;font-size:12px}
+.flow{text-align:center;font-size:13px;margin:16px 0}
+.flow .arrow{color:var(--cyan);margin:0 6px;font-weight:700}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:14px 0}
+.metric-box{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.metric-box .value{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700}
+.metric-box .label{color:var(--text2);font-size:11px;margin-top:4px}
+.footer{text-align:center;color:var(--text2);font-size:12px;margin-top:40px;padding-top:20px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>[DLThon] 전략 종합 보고서</h1>
+<p class="sub">지금까지의 여정 + 앞으로의 실행 계획 &nbsp;|&nbsp; 2026-04-23</p>
+
+<!-- ====== PART 1: 지금까지 ====== -->
+<h2>Part 1. 지금까지 — 실험 여정</h2>
+
+<div class="card">
+  <h3 style="margin-top:0">실험 추이</h3>
+  <table>
+    <tr><th>ID</th><th>핵심 변경</th><th>Val F1</th><th>Test 일반</th><th>교훈</th></tr>
+    <tr><td>B01</td><td>초기 baseline (합성 694건)</td><td class="mono">0.922</td><td class="mono">34건</td><td>기준선 확보</td></tr>
+    <tr><td>S01</td><td>합성 길이 개선 (139→206자)</td><td class="mono">0.922</td><td class="mono">35건</td><td>❌ 길이만으로는 부족</td></tr>
+    <tr><td>S02</td><td>합성 1,200건</td><td class="mono">0.921</td><td class="mono">38건</td><td>⚠️ 양 확대도 미미</td></tr>
+    <tr><td>S02b</td><td>MAX_LEN 128→256</td><td class="mono green">0.937</td><td class="mono">—</td><td>✅ +1.6%p, 256 확정</td></tr>
+    <tr><td>B02</td><td>15,000건 대규모 증강</td><td class="mono green">0.990</td><td class="mono red">23건 ↓</td><td>🔴 문체 숏컷 과적합</td></tr>
+    <tr><td>B03</td><td>문체 보정 + Label Smoothing</td><td class="mono green">0.991</td><td class="mono yellow">32건</td><td>⚠️ 개선되었지만 부족</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">발견한 핵심 문제 3가지</h3>
+
+  <div class="card2">
+    <p><span class="tag tag-red">문제 1</span> <strong>문체 숏컷</strong></p>
+    <p style="font-size:13px">합성 일반 데이터의 마침표(0.38), 존댓말(0.83), 느낌표(0.04)가 위협(6.18, 4.05, 1.15)과 극단적 차이 → 모델이 내용이 아닌 구두점/말투로 분류</p>
+  </div>
+
+  <div class="card2">
+    <p><span class="tag tag-red">문제 2</span> <strong>도메인 공백</strong></p>
+    <p style="font-size:13px">합성 데이터에 없는 유형: 119 신고, 비유적 위협("죽겠다"=피곤), 돈 관련 일상 → 모델이 이런 test 데이터를 전부 위협으로 분류</p>
+  </div>
+
+  <div class="card2">
+    <p><span class="tag tag-red">문제 3</span> <strong>맥락 무시</strong></p>
+    <p style="font-size:13px">모델이 단어 패턴만 읽고, "누가 누구에게, 어떤 의도로, 결말이 어떻게"를 파악 못함 → 위협 키워드 없는 468건 중 51%를 위협으로 오분류</p>
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">누적 인사이트 (12건)</h3>
+  <table>
+    <tr><th>#</th><th>확인된 사실</th><th>근거</th></tr>
+    <tr><td>1</td><td>Train/Test \n 포맷 차이를 전처리로 해결하는 것이 기본</td><td>EDA</td></tr>
+    <tr><td>2</td><td>KcELECTRA-base로 위협 4클래스는 Val F1 0.87~0.95</td><td>B01</td></tr>
+    <tr><td>3</td><td>합성 길이 늘려도 일반대화 탐지율 개선 안 됨</td><td>S01</td></tr>
+    <tr><td>4</td><td>합성 양 2배로 늘려도 미미한 효과 (+4건)</td><td>S02</td></tr>
+    <tr><td>5</td><td>MAX_LEN 128→256 변경만으로 +1.6%p</td><td>S02b</td></tr>
+    <tr><td>6</td><td>이모티콘 42.6% 포함 → 숏컷 학습 위험. 전면 제거 필수</td><td>B02 검증</td></tr>
+    <tr><td>7</td><td>합성 일반의 마침표/존댓말/느낌표가 위협과 극단적 차이 → 문체 숏컷</td><td>B02 분석</td></tr>
+    <tr><td>8</td><td>Val F1 99%는 문체 과적합. Kaggle 0.03. Val 맹신 금지</td><td>B02</td></tr>
+    <tr><td>9</td><td>증강 ×3.4가 일반 예측을 오히려 감소시킴 (38→23건)</td><td>B02 vs S02</td></tr>
+    <tr><td>10</td><td>EDA "에스칼레이션 패턴"과 "문장 셔플 증강"이 모순</td><td>코드 리뷰</td></tr>
+    <tr><td>11</td><td>위협 키워드 없이 위협 분류: 239/468건(51%) → 문체 의존</td><td>B03 분석</td></tr>
+    <tr><td>12</td><td>경계 사례 6건뿐 → 임계값 조정만으로는 한계</td><td>B03 분석</td></tr>
+  </table>
+</div>
+
+<!-- ====== PART 2: 전략 전환 ====== -->
+<h2>Part 2. 전략 전환 — v1에서 v2로</h2>
+
+<div class="card">
+  <div class="flow">
+    <span class="tag tag-red">v1: Top-Down</span>
+    <span class="arrow">→</span>
+    <span class="tag tag-green">v2: Bottom-Up</span>
+  </div>
+  <table>
+    <tr><th>항목</th><th>v1 (B01~B03)</th><th>v2 (B04~)</th></tr>
+    <tr><td>접근</td><td>"위협을 분석해서 반대를 만들자"</td><td class="green"><strong>"실제 일반 대화가 뭔지 파악하고 재현하자"</strong></td></tr>
+    <tr><td>근거</td><td>EDA 수치 기반</td><td class="green"><strong>correct.md (test 일반 104건 분석)</strong></td></tr>
+    <tr><td>도메인</td><td>5개 카테고리</td><td class="green"><strong>33개 세분화 (5 Group)</strong></td></tr>
+    <tr><td>비속어</td><td>절대 금지</td><td class="green"><strong>빈도 제어 허용</strong> (실제 일반 대화에 포함)</td></tr>
+    <tr><td>경계선 표현</td><td>"죽을래" 금지</td><td class="green"><strong>"죽을래", "때릴라" 관용 표현 허용</strong></td></tr>
+    <tr><td>신고/상담</td><td>미포함</td><td class="green"><strong>119/112 신고, 감정 상담 추가</strong></td></tr>
+    <tr><td>일반대화 정의</td><td>위협의 반대</td><td class="green"><strong>쌍방 대등 + 유머 톤 + 평화로운 마무리</strong></td></tr>
+  </table>
+</div>
+
+<!-- ====== PART 3: 앞으로 ====== -->
+<h2>Part 3. 앞으로 — 실행 계획</h2>
+
+<div class="card">
+  <h3 style="margin-top:0;color:var(--green)">Track A: 데이터 개선 (B04)</h3>
+  <p style="font-size:13px;color:var(--text2);margin-bottom:12px">strategy_v2 + gem_prompt_v2 기반 합성 데이터 전면 재생성</p>
+
+  <div class="card2">
+    <strong>파이프라인 (7 Steps)</strong>
+    <div class="flow" style="text-align:left;margin:12px 0">
+      <span class="tag tag-green">Step 1</span> correct.md (104건 분석) ✅ 완료<br>
+      <span class="tag tag-green">Step 2</span> gem_prompt_v2 (33도메인 프롬프트) ✅ 완료<br>
+      <span class="tag tag-yellow">Step 3</span> <strong>Gemini Flash로 3,003건 생성 (33도메인 × 91건)</strong> ← 진행 중<br>
+      <span class="tag tag-blue">Step 4</span> 위협 4클래스 증강 → 각 3,000건<br>
+      <span class="tag tag-blue">Step 5</span> baseline_B04.csv (15,000건) 생성<br>
+      <span class="tag tag-blue">Step 6</span> validation.md 4축 검증<br>
+      <span class="tag tag-blue">Step 7</span> 수동 샘플링 확인
+    </div>
+  </div>
+
+  <div class="card2">
+    <strong>33개 도메인 구성</strong>
+    <table>
+      <tr><th>Group</th><th>도메인 수</th><th>건수</th><th>핵심</th></tr>
+      <tr><td><span class="cyan">A. 친구 수다</span></td><td>13개</td><td class="mono">1,183건</td><td>음식, 연예인, 게임, 쇼핑, 운동, 술, 돈(HN) 등</td></tr>
+      <tr><td><span class="purple">B. 커플/가족</span></td><td>5개</td><td class="mono">455건</td><td>데이트, 다툼(HN), 부모-자녀, 형제(HN), 부부</td></tr>
+      <tr><td><span class="yellow">C. 직장인</span></td><td>5개</td><td class="mono">455건</td><td>꼰대 뒷담, 야근, 동료 수다, 취업, 알바</td></tr>
+      <tr><td><span class="blue">D. 온라인/일상</span></td><td>5개</td><td class="mono">455건</td><td>카톡, 동창, 택배, 건강, 이사</td></tr>
+      <tr><td><span class="red">E. 신고/상담</span></td><td>5개</td><td class="mono">455건</td><td>119, 112, 직장상담, 인간관계, 분노상담</td></tr>
+    </table>
+  </div>
+
+  <div class="card2">
+    <strong>P01 (음식) 생성 결과 — v1 vs v2 비교</strong>
+    <table>
+      <tr><th>지표</th><th>v1 P01</th><th>v2 P01</th><th>test</th><th>판정</th></tr>
+      <tr><td>길이</td><td class="mono red">116자</td><td class="mono green">226자</td><td class="mono">212자</td><td>✅ 해결</td></tr>
+      <tr><td>마침표</td><td class="mono">5.0</td><td class="mono green">7.3</td><td class="mono">4.99</td><td>✅</td></tr>
+      <tr><td>물음표</td><td class="mono">3.2</td><td class="mono">3.0</td><td class="mono">3.40</td><td>✅</td></tr>
+      <tr><td>느낌표</td><td class="mono">1.0</td><td class="mono">1.2</td><td class="mono">0.85</td><td>✅</td></tr>
+      <tr><td>150자 미만</td><td class="mono red">다수</td><td class="mono green">0건</td><td>—</td><td>✅ 해결</td></tr>
+    </table>
+    <div class="ok">프롬프트 수정으로 길이 문제 완전 해결. 나머지 32개 도메인도 동일 품질로 생성 예정.</div>
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;color:var(--purple)">Track B: 모델 구조 개선 (Context-Aware)</h3>
+  <p style="font-size:13px;color:var(--text2);margin-bottom:12px">단어 패턴이 아닌 대화의 맥락(화자 관계, 마무리 톤)을 읽는 모델</p>
+
+  <div class="card2">
+    <strong>Context-Aware Multi-Head Model</strong>
+    <pre style="font-family:'JetBrains Mono';font-size:12px;color:var(--text2);margin:8px 0;line-height:1.6">
+                    KcELECTRA (공유 백본)
+                         │
+         ┌───────────────┼───────────────┐
+         │               │               │
+    [CLS] 토큰      화자A vs 화자B    마지막 20%
+         │               │               │
+    Main Head      Symmetry Head    Ending Head
+    (5클래스)       (대등/비대칭)     (평화/위협)
+    </pre>
+  </div>
+
+  <div class="card2">
+    <strong>strategy_v2 판별 기준과의 매핑</strong>
+    <table>
+      <tr><th>판별 기준</th><th>모델 컴포넌트</th><th>학습 방법</th></tr>
+      <tr><td><strong>쌍방 대등</strong></td><td><span class="purple">Speaker-Aware Pooling</span></td><td>화자 A/B representation 차이로 비대칭 감지</td></tr>
+      <tr><td><strong>평화로운 마무리</strong></td><td><span class="blue">Ending Pooling</span></td><td>대화 후반 20% 토큰에 attention 집중</td></tr>
+      <tr><td><strong>위협 의도</strong></td><td><span class="cyan">Main Head</span></td><td>전체 맥락 종합 + 보조 태스크 신호 활용</td></tr>
+    </table>
+  </div>
+
+  <div class="card2">
+    <strong>기대 효과 — 현재 실패 패턴 해결</strong>
+    <table>
+      <tr><th>실패 패턴</th><th>현재</th><th>Context-Aware</th></tr>
+      <tr><td>"죽겠다" (비유) → 협박</td><td class="red">오분류</td><td class="green">Ending Head: 마무리 평화 → 일반</td></tr>
+      <tr><td>"15만원 분실" → 갈취</td><td class="red">오분류</td><td class="green">Symmetry Head: 대등 관계 → 일반</td></tr>
+      <tr><td>"대표님 인사" → 괴롭힘</td><td class="red">오분류</td><td class="green">Symmetry Head: 자연스러운 존댓말 → 일반</td></tr>
+      <tr><td>119 신고 → 협박</td><td class="red">오분류</td><td class="green">Ending Head: 구조 안내 마무리 → 일반</td></tr>
+    </table>
+  </div>
+
+  <div class="card2">
+    <strong>구현 순서</strong>
+    <table>
+      <tr><th>Phase</th><th>내용</th><th>난이도</th><th>소요</th></tr>
+      <tr><td>1</td><td>Ending Pooling + Multi-head Loss</td><td>🟢 쉬움</td><td>1~2시간</td></tr>
+      <tr><td>2</td><td>Speaker-Aware Pooling 추가</td><td>🟡 중간</td><td>2~3시간</td></tr>
+      <tr><td>3</td><td>B04 데이터 + Context-Aware 결합 실험</td><td>🟢 쉬움</td><td>학습 시간</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ====== 실행 로드맵 ====== -->
+<h2>Part 4. 실행 로드맵</h2>
+
+<div class="card">
+  <table>
+    <tr><th>순서</th><th>작업</th><th>상태</th><th>담당</th></tr>
+    <tr>
+      <td><span class="tag tag-yellow">1</span></td>
+      <td><strong>Gemini Flash로 3,003건 생성</strong> (33도메인 × 91건)</td>
+      <td><span class="tag tag-yellow">진행 중</span> P01 완료</td>
+      <td>수동 (Gemini Gem)</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-blue">2</span></td>
+      <td>생성 데이터 4축 검증 (validation.md)</td>
+      <td>대기</td>
+      <td>자동 스크립트</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-blue">3</span></td>
+      <td>baseline_B04.csv 생성 (15,000건)</td>
+      <td>대기</td>
+      <td>자동 스크립트</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-blue">4</span></td>
+      <td><strong>B04 학습</strong> — 기존 모델 구조 + v2 데이터</td>
+      <td>대기</td>
+      <td>학습 스크립트</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-purple">5</span></td>
+      <td><strong>Context-Aware 모델</strong> Phase 1 (Ending + Multi-head)</td>
+      <td>설계 완료</td>
+      <td>구현 필요</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-purple">6</span></td>
+      <td><strong>Context-Aware 모델</strong> Phase 2 (Speaker-Aware)</td>
+      <td>설계 완료</td>
+      <td>구현 필요</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-green">7</span></td>
+      <td>B04 vs B04+ (데이터 개선 vs 모델+데이터) 비교</td>
+      <td>대기</td>
+      <td>Ablation</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-green">8</span></td>
+      <td>Kaggle 제출 & 최종 submission</td>
+      <td>대기</td>
+      <td>—</td>
+    </tr>
+  </table>
+
+  <div class="insight">
+    <strong>핵심 원칙</strong>: Track A(데이터)와 Track B(모델)를 <strong>독립적으로 진행</strong>한 뒤 결합 실험. 데이터만 개선한 효과 vs 모델 구조만 개선한 효과 vs 둘 다 개선한 효과를 분리해서 측정.
+  </div>
+</div>
+
+<!-- ====== 파일 구조 ====== -->
+<h2>Part 5. 프로젝트 파일 구조</h2>
+
+<div class="card">
+  <pre style="font-family:'JetBrains Mono';font-size:12px;color:var(--text2);line-height:1.8">
+DLthon/
+├── data/
+│   ├── train.csv, test.csv, submission.csv
+│   └── baseline/
+│       ├── baseline.csv         # B02
+│       ├── baseline_B03.csv     # B03
+│       └── baseline_B04.csv     # B04 (예정)
+├── docs/
+│   ├── strategy_v1.md           # v1 전략
+│   ├── strategy_v2.md           # v2 전략 (현재)
+│   ├── model_plan.md            # 모델 구현 계획
+│   ├── <span class="green">model_context_design.md  # Context-Aware 설계 (신규)</span>
+│   ├── correct.md               # test 일반대화 104건 분석
+│   └── synthetic/
+│       ├── gem_prompt_v2.md     # 33도메인 프롬프트 (수정 완료)
+│       └── validation.md        # 4축 검증 기준 (수정 완료)
+├── logs/
+│   ├── 실험일지_노션붙여넣기용.md
+│   ├── 모델_숏컷_특성_리스트.md
+│   ├── B03_일반대화_심층분석.md
+│   └── 파일정리_컨벤션.md
+└── outputs/
+    ├── ablation_study.csv       # 전체 실험 기록
+    └── submission_B03_*.csv     # 최신 제출 파일
+  </pre>
+</div>
+
+<!-- ====== 핵심 메시지 ====== -->
+<h2>Part 6. 핵심 메시지</h2>
+
+<div class="card">
+  <div class="danger">
+    <strong>지금까지의 교훈</strong>: 모델 성능의 80%는 <strong>데이터 품질</strong>이 결정한다. Val F1 99%가 의미 없을 수 있고, 합성 데이터의 "형식적 특징"이 "내용"보다 강력한 분류 신호가 될 수 있다.
+  </div>
+
+  <div class="ok">
+    <strong>앞으로의 방향</strong>: 두 트랙 병행.
+    <ul style="margin:8px 0;padding-left:20px;font-size:13px">
+      <li><strong>Track A (데이터)</strong>: 실제 일반 대화의 도메인 다양성과 문체를 정밀 재현</li>
+      <li><strong>Track B (모델)</strong>: 단어 패턴이 아닌 화자 관계와 대화 흐름을 읽는 구조</li>
+    </ul>
+  </div>
+
+  <div class="insight">
+    <strong>발표 서사</strong>: "Val 99%에서 Test 0.03으로 추락한 경험 → 원인 분석 → 데이터 전략 전면 재설계 + 맥락 인식 모델 구조 제안"이 이 프로젝트의 가장 강력한 스토리.
+  </div>
+</div>
+
+<div class="footer">
+  DLThon — 전략 종합 보고서 &nbsp;|&nbsp; 2026-04-23
+</div>
+
+</div>
+</body>
+</html>
