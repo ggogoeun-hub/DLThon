@@ -1,0 +1,39 @@
+Device: cpu
+Train: 15000 | Val: 965 | Test: 500
+  갈취 대화: 공존율=0.128, 대등어휘=0.8개
+  기타 괴롭힘 대화: 공존율=0.030, 대등어휘=0.7개
+  직장 내 괴롭힘 대화: 공존율=0.040, 대등어휘=0.5개
+  협박 대화: 공존율=0.274, 대등어휘=0.7개
+  일반 대화: 공존율=0.000, 대등어휘=1.1개
+
+============================================================
+지배/복종 피처 실험 | Multi-head + 5피처 | Epoch 3 | 동결 9층
+============================================================
+Some weights of RobertaModel were not initialized from the model checkpoint at klue/roberta-base and are newly initialized: ['pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+  전체: 111,115,528 | 학습: 22,351,624 (20.1%)
+  Epoch 1 | Train F1: 0.5698 | Val F1: 0.8418 | 1509s << BEST
+  Epoch 2 | Train F1: 0.8608 | Val F1: 0.8793 | 1555s << BEST
+  Epoch 3 | Train F1: 0.8853 | Val F1: 0.8877 | 1517s << BEST
+
+  >> Best: Epoch 3 | Val F1: 0.8877 | 일반대화 F1: 0.9689 | 76.4분
+              precision    recall  f1-score   support
+
+       갈취 대화     0.8677    0.8410    0.8542       195
+   기타 괴롭힘 대화     0.8301    0.8550    0.8424       200
+ 직장 내 괴롭힘 대화     0.8976    0.9485    0.9223       194
+       협박 대화     0.8531    0.8483    0.8507       178
+       일반 대화     0.9947    0.9444    0.9689       198
+
+    accuracy                         0.8881       965
+   macro avg     0.8886    0.8874    0.8877       965
+weighted avg     0.8893    0.8881    0.8883       965
+
+  >> Test 일반대화: 83건 / 100건
+  >> Test 분포: {'직장 내 괴롭힘 대화': 111, '협박 대화': 107, '갈취 대화': 101, '기타 괴롭힘 대화': 98, '일반 대화': 83}
+
+  >> Submission 저장 완료
+
+============================================================
+지배/복종 피처 실험 완료! | Val F1: 0.8877 | Test 일반: 83건 | 76.4분
+============================================================

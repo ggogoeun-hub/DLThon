@@ -1,0 +1,34 @@
+Device: cpu
+Train: 15000 | Val: 965 | Test: 500
+구두점 유지 | Epoch 3 | 동결 9층 | BS=64
+Mean Pool vs Proper Multi-head 비교
+
+============================================================
+[proper_multihead]
+============================================================
+Some weights of RobertaModel were not initialized from the model checkpoint at klue/roberta-base and are newly initialized: ['pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+  전체: 111,114,248 | 학습: 22,350,344 (20.1%)
+  Epoch 1 | Train F1: 0.5850 | Val F1: 0.8355 | 1703s << BEST
+  Epoch 2 | Train F1: 0.8605 | Val F1: 0.8826 | 1565s << BEST
+  Epoch 3 | Train F1: 0.8857 | Val F1: 0.8848 | 1621s << BEST
+
+  >> Best: Epoch 3 | Val F1: 0.8848 | 일반대화 F1: 0.9556 | 81.5분
+              precision    recall  f1-score   support
+
+       갈취 대화     0.8677    0.8410    0.8542       195
+   기타 괴롭힘 대화     0.8261    0.8550    0.8403       200
+ 직장 내 괴롭힘 대화     0.8976    0.9485    0.9223       194
+       협박 대화     0.8492    0.8539    0.8515       178
+       일반 대화     0.9892    0.9242    0.9556       198
+
+    accuracy                         0.8850       965
+   macro avg     0.8859    0.8845    0.8848       965
+weighted avg     0.8866    0.8850    0.8853       965
+
+  >> Test 일반대화: 84건 / 100건
+
+============================================================
+비교 (기존 Mean Pool 참고: Val F1 ~0.878, Test 일반 ~81건)
+============================================================
+  Proper Multi-head | Val F1: 0.8848 | 일반 F1: 0.9556 | Test 일반: 84건 | 81.5분

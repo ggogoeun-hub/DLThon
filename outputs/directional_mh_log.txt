@@ -1,0 +1,11 @@
+Device: cpu
+Train: 15000 | Val: 965 | Test: 500
+
+============================================================
+방향성 Multi-head | escalation/resolution 분리 | 3ep | 동결 9층
+============================================================
+Some weights of RobertaModel were not initialized from the model checkpoint at klue/roberta-base and are newly initialized: ['pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+  전체: 111,213,065 | 학습: 22,449,161 (20.2%)
+  Epoch 1 | Train F1: 0.5823 | Val F1: 0.8409 | 1576s << BEST
+  Epoch 2 | Train F1: 0.8653 | Val F1: 0.8754 | 1792s << BEST

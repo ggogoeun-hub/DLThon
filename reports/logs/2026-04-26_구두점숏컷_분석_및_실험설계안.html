@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>구두점 숏컷 분석 및 후속 실험 설계안</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e17; --card: #1a2332; --card2: #141e2d; --border: #2a3545;
+  --text: #e2e8f0; --text2: #8892a4; --cyan: #06b6d4; --yellow: #f59e0b;
+  --red: #ef4444; --blue: #3b82f6; --green: #10b981;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.7; padding: 40px 20px; }
+.container { max-width: 920px; margin: 0 auto; }
+h1 { color: var(--cyan); font-size: 1.6rem; font-weight: 700; margin-bottom: 6px; }
+.subtitle { color: var(--text2); font-size: 0.9rem; margin-bottom: 32px; }
+h2 { color: var(--cyan); font-size: 1.15rem; font-weight: 600; margin: 32px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+h3 { color: var(--yellow); font-size: 1rem; font-weight: 600; margin: 20px 0 10px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 14px 0; }
+.card-inner { background: var(--card2); border-radius: 8px; padding: 16px; margin: 12px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.85rem; }
+th { background: var(--card2); color: var(--cyan); font-weight: 600; padding: 10px 12px; text-align: left; border-bottom: 2px solid var(--border); }
+td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.mono { font-family: 'JetBrains Mono', monospace; }
+.up { color: var(--green); font-weight: 600; }
+.down { color: var(--red); font-weight: 600; }
+.best { color: var(--yellow); font-weight: 700; }
+.insight { background: rgba(6,182,212,0.08); border-left: 3px solid var(--cyan); padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 0.9rem; }
+.warn { background: rgba(239,68,68,0.08); border-left: 3px solid var(--red); padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 0.9rem; }
+code { background: var(--card2); padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+pre { background: var(--card2); padding: 16px; border-radius: 8px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; line-height: 1.6; margin: 10px 0; }
+.tag { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+.tag-red { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+.tag-green { background: rgba(16,185,129,0.12); color: var(--green); border: 1px solid rgba(16,185,129,0.25); }
+.tag-yellow { background: rgba(245,158,11,0.12); color: var(--yellow); border: 1px solid rgba(245,158,11,0.25); }
+.footer { text-align: center; color: var(--text2); font-size: 0.8rem; margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border); }
+.flow { display: flex; align-items: center; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+.flow-box { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 0.85rem; }
+.flow-arrow { color: var(--cyan); font-size: 1.2rem; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>구두점 숏컷 분석 및 후속 실험 설계안</h1>
+<p class="subtitle">DLthon DKTC | 일반대화 분류 병목 원인 분석 → 실험 로드맵 | 2026-04-26</p>
+
+<!-- ========== 1. 문제 발견 ========== -->
+<h2>1. 문제 정의 — 왜 일반대화가 88건에서 멈추는가</h2>
+<div class="card">
+  <p>현재 최고 모델(M3-D Multi-head, 6ep)이 Test 일반대화 100건 중 88건만 정분류. 나머지 12건은 위협으로 오분류됨.</p>
+
+  <h3>마침표 개수별 일반대화 예측 비율</h3>
+  <table>
+    <tr><th>마침표 개수</th><th>Test 샘플 수</th><th>일반대화 예측</th><th>비율</th></tr>
+    <tr><td class="mono">0개</td><td class="mono">152건</td><td class="mono best">77건</td><td class="mono best">50.7%</td></tr>
+    <tr><td class="mono">1~2개</td><td class="mono">65건</td><td class="mono down">0건</td><td class="mono down">0.0%</td></tr>
+    <tr><td class="mono">3~5개</td><td class="mono">101건</td><td class="mono">6건</td><td class="mono">5.9%</td></tr>
+    <tr><td class="mono">6~10개</td><td class="mono">92건</td><td class="mono">5건</td><td class="mono">5.4%</td></tr>
+    <tr><td class="mono">11+개</td><td class="mono">90건</td><td class="mono down">0건</td><td class="mono down">0.0%</td></tr>
+  </table>
+
+  <div class="warn">
+    <strong>88건 중 77건(87.5%)이 마침표 0개인 샘플.</strong> 마침표가 1개만 있어도 일반대화 예측이 0%로 떨어짐. 모델이 의미가 아닌 구두점 개수를 세서 분류하고 있다는 결정적 증거.
+  </div>
+</div>
+
+<!-- ========== 2. 원인 ========== -->
+<h2>2. 원인 — 합성 데이터의 구두점 분포 불일치</h2>
+<div class="card">
+  <table>
+    <tr><th>지표</th><th>Train 일반대화</th><th>Train 위협 4클래스</th><th>Test 전체</th></tr>
+    <tr><td>마침표</td><td class="mono down">0.35개/건</td><td class="mono">5.97개/건</td><td class="mono">4.99개/건</td></tr>
+    <tr><td>물음표</td><td class="mono down">0.22개/건</td><td class="mono">4.08개/건</td><td class="mono">3.40개/건</td></tr>
+    <tr><td>느낌표</td><td class="mono down">0.00개/건</td><td class="mono">1.12개/건</td><td class="mono">0.85개/건</td></tr>
+    <tr><td>평균 길이</td><td class="mono down">122자</td><td class="mono">214자</td><td class="mono">214자</td></tr>
+  </table>
+
+  <h3>근본 원인: 프롬프트 설계</h3>
+  <div class="card-inner">
+    <p>합성 일반대화 생성 프롬프트(<code>gem_prompt.md</code>)의 예시:</p>
+    <pre>"야 밥먹었어 아니 뭐먹을까 치킨먹자 오 좋은데"</pre>
+    <p>이 예시 자체에 구두점이 없어서, LLM(Gemini)이 구두점 없는 스타일을 그대로 모방. 프롬프트에 구두점 수량 스펙도 없었음. 반면 위협 원본 데이터는 <code>\n</code> 턴 구분이 <code>. </code>로 변환되면서 마침표가 다수 포함.</p>
+  </div>
+</div>
+
+<!-- ========== 3. 토크나이저 분석 ========== -->
+<h2>3. 토크나이저 레벨 분석 — 구두점이 모델에 어떻게 보이는가</h2>
+<div class="card">
+  <h3>RoBERTa 임베딩 구조</h3>
+  <div class="card-inner">
+    <pre>입력 텍스트 → Token Embedding (32,000 × 768)  "의미"
+            + Position Embedding (514 × 768)  "위치"
+            → LayerNorm → 12층 Self-Attention
+            → Mean Pooling → 768차원 벡터 → 분류 헤드</pre>
+  </div>
+
+  <h3>구두점 토큰의 정체</h3>
+  <table>
+    <tr><th>입력</th><th>토큰화</th><th>구두점 토큰</th></tr>
+    <tr>
+      <td>위협 (마침표 有)</td>
+      <td class="mono" style="font-size:0.78rem;">...왜그러세요 | <strong style="color:var(--red);">.</strong> | 여기...죽을래 | <strong style="color:var(--red);">?</strong> | 잘못했어요</td>
+      <td class="mono">51토큰 (구두점 2개)</td>
+    </tr>
+    <tr>
+      <td>일반 (마침표 無)</td>
+      <td class="mono" style="font-size:0.78rem;">야 | 빨리 | 타라 | 늦으면 | 다 | 죽어 | 내가 | 운전할</td>
+      <td class="mono">48토큰 (구두점 0개)</td>
+    </tr>
+  </table>
+
+  <div class="insight">
+    <code>.</code>과 <code>?</code>는 각각 독립 토큰 1개로 처리됨. 의미적으로는 <code>"."</code> vs <code>"?"</code> 코사인 유사도 0.14로 거의 무관한 토큰.<br><br>
+    <strong>토크나이저는 의미 단위를 잘 분리하고 있음:</strong><br>
+    <code>"떼먹는다고"</code> → <code>떼 | ##먹 | ##는 | ##다고</code> — 의미 충분<br>
+    <code>"죽여버린다"</code> → <code>죽여 | ##버린 | ##다</code> — 의미 충분<br><br>
+    구두점은 의미를 추가하는 게 아니라, <strong>모델이 의미 대신 세는 숏컷 피처를 제공</strong>하여 학습을 방해.
+  </div>
+
+  <h3>토큰 길이 분포 — 또 다른 숏컷</h3>
+  <table>
+    <tr><th>데이터</th><th>원본 평균</th><th>구두점 제거 후</th><th>MAX_LEN 초과</th></tr>
+    <tr><td>Train 일반</td><td class="mono down">60토큰</td><td class="mono">60토큰</td><td class="mono">0건</td></tr>
+    <tr><td>Train 위협</td><td class="mono">109~130토큰</td><td class="mono">99~118토큰</td><td class="mono">줄어듦</td></tr>
+    <tr><td>Test 전체</td><td class="mono">116토큰</td><td class="mono">107토큰</td><td class="mono">12→9건</td></tr>
+  </table>
+  <p style="color:var(--text2); font-size:0.85rem; margin-top:8px;">일반대화 60토큰 vs 위협 109~130토큰 — 길이 자체도 숏컷으로 작동 가능</p>
+</div>
+
+<!-- ========== 4. 청크 분석 ========== -->
+<h2>4. 청크 흐름 분석 — 의미 기반 분류의 본질</h2>
+<div class="card">
+  <p>개별 키워드가 아닌 <strong>청크 간 관계(흐름의 변화)</strong>가 일반 vs 위협을 결정:</p>
+
+  <h3>"새끼"가 들어가도 청크 흐름이 다름</h3>
+  <div class="card-inner">
+    <p><span class="tag tag-green">일반 (쌍방 디스 → 수긍)</span></p>
+    <pre>"이 새끼가 맨날"  →  "처먹고 운동도 안하니까"  →  "팩트라 할말이 없네"
+     [비난 청크]          [근거 청크]                  [수긍 청크] ✓</pre>
+  </div>
+  <div class="card-inner">
+    <p><span class="tag tag-red">괴롭힘 (일방 비하 → 배제)</span></p>
+    <pre>"촌스러워 걔 원래"  →  "저래 무시해 그만해"  →  "싫으면 학교를 오지마"
+     [비하 청크]            [동조 청크]               [배제 청크] ✗</pre>
+  </div>
+
+  <h3>"죽어"가 들어가도 청크 맥락이 다름</h3>
+  <div class="card-inner">
+    <p><span class="tag tag-green">일반 (게임)</span></p>
+    <pre>"늦으면 다 죽어"  →  "내가 운전할 테니까"  →  "너는 총 쏘는 거 집중해"
+     [게임 상황]          [협력 제안]               [역할 분담] ✓</pre>
+  </div>
+  <div class="card-inner">
+    <p><span class="tag tag-red">위협 (실제)</span></p>
+    <pre>"진짜 죽여버린다"  →  "시키는 대로 안 하면"  →  "가만 안 둬"
+     [직접 위협]           [조건부 강압]             [위협 강화] ✗</pre>
+  </div>
+
+  <div class="insight">
+    핵심은 <strong>후반부가 어떻게 전개되느냐</strong> — 수긍/협력이면 일반, 굴복/강압이면 위협. 현재 Mean Pooling은 이 흐름을 섞어버림.
+  </div>
+</div>
+
+<!-- ========== 5. Stage 3 구조 재평가 ========== -->
+<h2>5. Stage 3 모델 구조 재평가 — 설계 의도 vs 실제 구현</h2>
+<div class="card">
+  <table>
+    <tr><th>모델</th><th>설계 의도</th><th>실제 구현</th><th>평가</th></tr>
+    <tr>
+      <td><strong>Speaker-aware</strong></td>
+      <td>화자 A/B 분리 → 권력 비대칭 감지</td>
+      <td>토큰 포지션 짝수/홀수 분리</td>
+      <td><span class="tag tag-red">의도와 불일치</span><br><span style="font-size:0.8rem; color:var(--text2);">토큰 단위 교대 ≠ 화자 교대. 턴 경계 없이 화자 구분 불가능</span></td>
+    </tr>
+    <tr>
+      <td><strong>Multi-head</strong></td>
+      <td>대등성/마무리/위협을 각각 분석</td>
+      <td>같은 mean pool 벡터에서 스칼라 3개 출력</td>
+      <td><span class="tag tag-red">의도와 불일치</span><br><span style="font-size:0.8rem; color:var(--text2);">3개 헤드가 같은 입력 → 서로 다른 관점 아님. 차원 추가 효과만</span></td>
+    </tr>
+    <tr>
+      <td><strong>Ending Pooling</strong></td>
+      <td>마무리 톤 중점 분석</td>
+      <td>마지막 64토큰만 풀링</td>
+      <td><span class="tag tag-green">의도대로 작동</span><br><span style="font-size:0.8rem; color:var(--text2);">유일하게 다른 영역을 보는 구조</span></td>
+    </tr>
+  </table>
+
+  <div class="warn">
+    Stage 3에서 비교한 것은 "서로 다른 풀링 전략"이 아니라 <strong>Mean Pool + 약간의 변형</strong> 3가지. 88건 vs 85건 vs 84건의 차이는 구조적 우위가 아닌 학습 노이즈 수준일 수 있음.
+  </div>
+</div>
+
+<!-- ========== 6. 실험 로드맵 ========== -->
+<h2>6. 후속 실험 로드맵</h2>
+<div class="card">
+
+  <h3>실험 순서 및 근거</h3>
+
+  <div class="flow">
+    <div class="flow-box" style="border-color:var(--yellow);"><strong>EXP-1</strong><br>구두점 제거</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="border-color:var(--cyan);"><strong>EXP-2</strong><br>청크 흐름 구조</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="border-color:var(--green);"><strong>EXP-3</strong><br>턴 토큰 삽입</div>
+  </div>
+
+  <!-- EXP-1 -->
+  <div class="card-inner" style="border-left: 3px solid var(--yellow);">
+    <h3 style="margin-top:0;">EXP-1: 구두점 제거 <span class="tag tag-yellow">현재 진행 중</span></h3>
+    <table>
+      <tr><td style="width:100px;"><strong>가설</strong></td><td>구두점이 숏컷 피처 → 제거 시 모델이 의미 기반 분류로 전환</td></tr>
+      <tr><td><strong>방법</strong></td><td>전처리에서 <code>. ? !</code> 제거 후 동일 조건 학습</td></tr>
+      <tr><td><strong>기대효과</strong></td><td>마침표 1+개 샘플에서 일반대화 정분류율 상승 (현재 3.2% → 목표 15%+)</td></tr>
+      <tr><td><strong>위험</strong></td><td>위협 데이터 턴 경계 소실 → 위협 클래스 성능 하락 가능</td></tr>
+      <tr><td><strong>예상 영향</strong></td><td><strong>가장 큼</strong> — 병목의 근본 원인(숏컷) 제거</td></tr>
+    </table>
+  </div>
+
+  <!-- EXP-2 -->
+  <div class="card-inner" style="border-left: 3px solid var(--cyan);">
+    <h3 style="margin-top:0;">EXP-2: 청크 흐름 구조 (전반/후반 비교)</h3>
+    <table>
+      <tr><td style="width:100px;"><strong>가설</strong></td><td>대화의 전반→후반 변화(수긍 vs 굴복)가 분류의 핵심 신호</td></tr>
+      <tr><td><strong>방법</strong></td><td>토큰 시퀀스를 절반으로 나눠 각각 풀링 → 두 벡터의 관계로 분류</td></tr>
+      <tr><td><strong>구현</strong></td><td><pre>first_half = mean_pool(hidden[:, :L//2, :])   # 전반부
+second_half = mean_pool(hidden[:, L//2:, :])  # 후반부
+flow = concat([first_half, second_half, first_half - second_half])
+→ classifier(flow)</pre></td></tr>
+      <tr><td><strong>기대효과</strong></td><td>중간 — 경계 샘플(장난 vs 실제 괴롭힘)에서 개선</td></tr>
+      <tr><td><strong>전제조건</strong></td><td>EXP-1(구두점 제거) 위에 적용해야 효과 분리 가능</td></tr>
+    </table>
+  </div>
+
+  <!-- EXP-3 -->
+  <div class="card-inner" style="border-left: 3px solid var(--green);">
+    <h3 style="margin-top:0;">EXP-3: 턴 구분 특수 토큰 삽입</h3>
+    <table>
+      <tr><td style="width:100px;"><strong>가설</strong></td><td>턴 경계 정보가 화자 간 역학 파악에 도움</td></tr>
+      <tr><td><strong>방법</strong></td><td>구두점 대신 <code>[SEP]</code>를 턴 경계에 삽입</td></tr>
+      <tr><td><strong>데이터</strong></td><td>위협: 원본 <code>\n</code> → <code>[SEP]</code> 변환 가능 (100% 보존)<br>Test: 마침표 기반 턴 추정 (66.4%)<br>일반: 턴 경계 없음 → <span class="tag tag-red">새 숏컷 위험</span></td></tr>
+      <tr><td><strong>핵심 과제</strong></td><td>일반대화에 턴 경계가 없어서 비대칭 문제. 합성 데이터 재생성 또는 휴리스틱 턴 추정 필요</td></tr>
+      <tr><td><strong>기대효과</strong></td><td>중~낮음 — 데이터 재구축 부담 대비 효과 불확실</td></tr>
+    </table>
+  </div>
+
+  <div class="insight">
+    <strong>왜 이 순서인가:</strong> EXP-1이 병목(숏컷)을 제거하는 것이고, EXP-2/3은 모델 능력을 강화하는 것. 병목이 있는 상태에서 능력을 올려봐야 효과가 제한적이므로, 병목 해소 → 능력 강화 순서가 최적.
+  </div>
+</div>
+
+<!-- ========== 7. 핵심 교훈 ========== -->
+<h2>7. 여기까지의 핵심 교훈</h2>
+<div class="card">
+  <div class="card-inner">
+    <p><strong style="color:var(--cyan);">1. 데이터 분포가 모델 능력을 압도한다</strong><br>
+    구두점 분포 불일치 하나가 모델 구조 변경(3가지), 에폭 증가(3→6), 동결 해제보다 더 큰 영향. 모델을 바꾸기 전에 데이터를 먼저 봐야 한다.</p>
+  </div>
+  <div class="card-inner">
+    <p><strong style="color:var(--cyan);">2. 설계 의도와 실제 구현을 검증해야 한다</strong><br>
+    Speaker-aware(토큰 짝홀수 ≠ 화자 구분)와 Multi-head(같은 벡터에서 3개 스칼라 ≠ 다른 관점)가 설계 의도대로 작동하지 않았음. 구조를 만들었으면 실제로 의도한 정보를 보고 있는지 검증이 필요.</p>
+  </div>
+  <div class="card-inner">
+    <p><strong style="color:var(--cyan);">3. 숏컷은 겉으로 보이지 않는다</strong><br>
+    Val F1 0.91, Test 88건이면 "잘 작동한다"고 생각하기 쉽지만, 마침표별 분류율을 보면 87.5%가 숏컷 의존. 성능 지표만으로는 모델이 정말 의미를 이해하는지 알 수 없다.</p>
+  </div>
+</div>
+
+<div class="footer">
+  구두점 숏컷 분석 및 실험 설계안 | Generated by Claude Code | 2026-04-26
+</div>
+
+</div>
+</body>
+</html>

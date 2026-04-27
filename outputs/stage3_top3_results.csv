@@ -1,0 +1,4 @@
+exp_id,desc,val_f1,normal_val_f1,test_normal,best_epoch,time_min
+M3-D-e6,Multi-head (6ep),0.9115,0.9795,88,6,290.3
+M3-C-e6,Speaker-aware (6ep),0.9113,0.9821,85,5,216.5
+M3-B-e6,Ending Pooling (6ep),0.8994,0.9795,84,6,229.2

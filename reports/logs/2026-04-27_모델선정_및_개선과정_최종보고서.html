@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DLthon DKTC — 모델 선정 및 개선 과정 보고서</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e17; --card: #1a2332; --card2: #141e2d; --border: #2a3545;
+  --text: #e2e8f0; --text2: #8892a4; --cyan: #06b6d4; --yellow: #f59e0b;
+  --red: #ef4444; --blue: #3b82f6; --green: #10b981; --purple: #a78bfa;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.7; padding: 40px 20px; }
+.container { max-width: 960px; margin: 0 auto; }
+h1 { color: var(--cyan); font-size: 1.7rem; font-weight: 700; margin-bottom: 4px; }
+.subtitle { color: var(--text2); font-size: 0.88rem; margin-bottom: 8px; }
+.author { color: var(--text2); font-size: 0.82rem; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+h2 { color: var(--cyan); font-size: 1.2rem; font-weight: 600; margin: 36px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+h3 { color: var(--yellow); font-size: 1rem; font-weight: 600; margin: 22px 0 10px; }
+h4 { color: var(--purple); font-size: 0.92rem; font-weight: 600; margin: 16px 0 8px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 14px 0; }
+.card-inner { background: var(--card2); border-radius: 8px; padding: 16px; margin: 12px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.83rem; }
+th { background: var(--card2); color: var(--cyan); font-weight: 600; padding: 10px 12px; text-align: left; border-bottom: 2px solid var(--border); }
+td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:hover td { background: rgba(6,182,212,0.04); }
+.mono { font-family: 'JetBrains Mono', monospace; }
+pre { background: var(--card2); padding: 14px; border-radius: 8px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.6; margin: 10px 0; }
+.up { color: var(--green); font-weight: 600; }
+.down { color: var(--red); font-weight: 600; }
+.best { color: var(--yellow); font-weight: 700; }
+.tag { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.73rem; font-weight: 600; }
+.tag-gold { background: rgba(245,158,11,0.15); color: var(--yellow); border: 1px solid rgba(245,158,11,0.3); }
+.tag-red { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+.tag-green { background: rgba(16,185,129,0.12); color: var(--green); border: 1px solid rgba(16,185,129,0.25); }
+.tag-blue { background: rgba(59,130,246,0.12); color: var(--blue); border: 1px solid rgba(59,130,246,0.25); }
+.tag-purple { background: rgba(167,139,250,0.12); color: var(--purple); border: 1px solid rgba(167,139,250,0.25); }
+.insight { background: rgba(6,182,212,0.08); border-left: 3px solid var(--cyan); padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 0.88rem; }
+.warn { background: rgba(239,68,68,0.08); border-left: 3px solid var(--red); padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 0.88rem; }
+.concept { background: rgba(167,139,250,0.08); border-left: 3px solid var(--purple); padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 0.88rem; }
+.footer { text-align: center; color: var(--text2); font-size: 0.78rem; margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border); }
+.kpi-row { display: flex; gap: 10px; margin: 14px 0; flex-wrap: wrap; }
+.kpi { flex: 1; min-width: 120px; background: var(--card2); border-radius: 10px; padding: 14px; text-align: center; border: 1px solid var(--border); }
+.kpi-value { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 700; }
+.kpi-label { color: var(--text2); font-size: 0.72rem; margin-top: 2px; }
+.toc { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin: 14px 0; }
+.toc a { color: var(--cyan); text-decoration: none; font-size: 0.88rem; }
+.toc ol { padding-left: 20px; }
+.toc li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>모델 선정 및 개선 과정 보고서</h1>
+<p class="subtitle">DLthon DKTC 5-Class 위협 대화 분류 | 아이펠 온라인 17기</p>
+<p class="author">담당: 모델 파트 | 2026-04-27</p>
+
+<!-- KPI -->
+<div class="kpi-row">
+  <div class="kpi"><div class="kpi-value" style="color:var(--cyan);">15+</div><div class="kpi-label">총 실험 수</div></div>
+  <div class="kpi"><div class="kpi-value" style="color:var(--yellow);">0.9115</div><div class="kpi-label">최종 Val Macro F1</div></div>
+  <div class="kpi"><div class="kpi-value" style="color:var(--green);">88건</div><div class="kpi-label">Test 일반대화 정분류</div></div>
+  <div class="kpi"><div class="kpi-value" style="color:var(--purple);">3단계</div><div class="kpi-label">체계적 실험 설계</div></div>
+</div>
+
+<!-- 목차 -->
+<div class="toc">
+  <strong style="color:var(--cyan);">목차</strong>
+  <ol>
+    <li><a href="#s1">실험 설계 철학 — 왜 3단계로 나눴는가</a></li>
+    <li><a href="#s2">Stage 1: 백본 모델 선정 — RoBERTa vs KcELECTRA</a></li>
+    <li><a href="#s3">Stage 2: 학습 전략 최적화 — 차등 학습률과 정규화</a></li>
+    <li><a href="#s4">Stage 3: 인코더 출력 활용 전략 — 풀링 구조 실험</a></li>
+    <li><a href="#s5">심층 분석: 토크나이저부터 분류 헤드까지</a></li>
+    <li><a href="#s6">숏컷 학습 발견과 검증</a></li>
+    <li><a href="#s7">후속 실험: 구두점 제거, 청크 흐름, 지배/복종 피처</a></li>
+    <li><a href="#s8">구조 재평가 — 설계 의도 vs 실제 구현 검증</a></li>
+    <li><a href="#s9">최종 결과 및 교훈</a></li>
+  </ol>
+</div>
+
+<!-- ========== 1. 실험 설계 ========== -->
+<h2 id="s1">1. 실험 설계 철학 — 왜 3단계로 나눴는가</h2>
+<div class="card">
+  <p>하나의 변수만 바꾸면서 효과를 분리 측정하기 위해 <strong>3단계 Ablation Study</strong>를 설계했습니다.</p>
+  <div class="card-inner">
+    <table>
+      <tr><th>단계</th><th>고정 변수</th><th>탐색 변수</th><th>목적</th></tr>
+      <tr><td><strong>Stage 1</strong></td><td>학습률, 에폭</td><td>모델, 데이터, max_len</td><td>어떤 백본이 최적인가</td></tr>
+      <tr><td><strong>Stage 2</strong></td><td>모델(RoBERTa)</td><td>차등 LR, Dropout, Label Smoothing</td><td>어떤 학습 전략이 최적인가</td></tr>
+      <tr><td><strong>Stage 3</strong></td><td>모델+학습전략</td><td>풀링 구조 (Ending, Speaker, Multi-head)</td><td>인코더 출력을 어떻게 활용하는가</td></tr>
+    </table>
+  </div>
+  <div class="insight">
+    <strong>핵심 원칙:</strong> 각 단계에서 확정된 최적 설정을 다음 단계로 이월. Stage 1에서 RoBERTa 확정 → Stage 2에서 차등 LR 10배 확정 → Stage 3에서 풀링 구조 비교.
+  </div>
+</div>
+
+<!-- ========== 2. Stage 1 ========== -->
+<h2 id="s2">2. Stage 1: 백본 모델 선정</h2>
+<div class="card">
+  <h3>2-1. 왜 사전학습 언어모델인가</h3>
+  <div class="concept">
+    <strong>Concept: Transfer Learning</strong><br>
+    대규모 한국어 코퍼스로 사전학습된 모델은 이미 한국어의 문법, 의미, 문맥을 이해합니다. 이 지식을 위협 대화 분류라는 특정 과제에 전이(transfer)하면, 3,950건의 적은 데이터로도 높은 성능을 달성할 수 있습니다.
+  </div>
+
+  <h3>2-2. 후보 모델</h3>
+  <table>
+    <tr><th>모델</th><th>아키텍처</th><th>사전학습 데이터</th><th>특징</th></tr>
+    <tr><td><strong>KcELECTRA</strong></td><td>ELECTRA (Replaced Token Detection)</td><td>한국어 댓글 코퍼스</td><td>구어체/비격식체에 강점</td></tr>
+    <tr><td><strong>klue/roberta-base</strong></td><td>RoBERTa (Masked Language Model)</td><td>KLUE 벤치마크 코퍼스</td><td>문맥 파악에 강점</td></tr>
+  </table>
+
+  <h3>2-3. Ablation 결과</h3>
+  <table>
+    <tr><th>실험</th><th>모델</th><th>합성 일반</th><th>MAX_LEN</th><th>Val F1</th><th>발견</th></tr>
+    <tr><td>B01</td><td>KcELECTRA</td><td class="mono">694</td><td class="mono">128</td><td class="mono">0.9219</td><td>시작점</td></tr>
+    <tr><td>S02-v3</td><td>KcELECTRA</td><td class="mono">1,200</td><td class="mono best">256</td><td class="mono">0.9369</td><td><span class="up">MAX_LEN 256 효과 +1.5%p</span></td></tr>
+    <tr><td>B02</td><td>KcELECTRA</td><td class="mono">15k</td><td class="mono">256</td><td class="mono">0.9902</td><td><span class="up">균형 데이터 점프</span></td></tr>
+    <tr><td class="best">B04</td><td class="best">RoBERTa</td><td class="mono best">3,000</td><td class="mono">256</td><td class="mono best">0.9916</td><td><span class="tag tag-gold">모델 효과 확인</span></td></tr>
+    <tr><td>B04b</td><td>KcELECTRA</td><td class="mono">3,000</td><td class="mono">256</td><td class="mono">0.9898</td><td>동일 데이터 비교</td></tr>
+  </table>
+
+  <div class="insight">
+    <strong>핵심 발견 3가지:</strong><br>
+    1) <strong>MAX_LEN 256</strong>: 대화 길이 특성상 128토큰으로는 정보 손실. 256으로 확장 시 +1.5%p<br>
+    2) <strong>15k 균형 데이터</strong>: 데이터 전략이 모델보다 더 큰 영향 (0.93 → 0.99)<br>
+    3) <strong>RoBERTa > KcELECTRA</strong>: 동일 데이터에서 B04(0.9916) > B04b(0.9898). 문맥 파악 능력 차이
+  </div>
+
+  <div class="concept">
+    <strong>Concept: MAX_LEN과 토큰화</strong><br>
+    RoBERTa의 WordPiece 토크나이저는 한국어 어절을 서브워드 단위로 분리합니다:<br>
+    <code>"찾아야겠다"</code> → <code>찾아 | ##야 | ##겠다</code> (3토큰)<br>
+    대화 텍스트는 평균 116토큰(Test 기준)이므로, MAX_LEN=128이면 일부 대화가 잘리지만 256이면 대부분 수용 가능합니다.
+  </div>
+
+  <p style="margin-top:12px;"><strong>확정:</strong> <code>klue/roberta-base</code> + <code>MAX_LEN=256</code></p>
+</div>
+
+<!-- ========== 3. Stage 2 ========== -->
+<h2 id="s3">3. Stage 2: 학습 전략 최적화</h2>
+<div class="card">
+  <h3>3-1. 차등 학습률 (Differential Learning Rate)</h3>
+  <div class="concept">
+    <strong>Concept: 왜 백본과 헤드의 학습률을 다르게 하는가</strong><br>
+    사전학습된 백본은 이미 한국어를 잘 이해하고 있으므로 조심스럽게 미세 조정(작은 LR)하고, 새로 추가한 분류 헤드는 처음부터 학습해야 하므로 더 큰 LR을 적용합니다. 이렇게 하면 백본의 사전학습 지식을 보존하면서 과제 특화 학습이 가능합니다.
+  </div>
+
+  <pre>optimizer = AdamW([
+    {'params': backbone_params, 'lr': 2e-6},   # 백본: 조심스럽게
+    {'params': head_params,     'lr': 2e-5},   # 헤드: 적극적으로
+])
+# 차등 비율 = 2e-5 / 2e-6 = 10배</pre>
+
+  <div class="card-inner">
+    <p><strong>차등 비율에 따른 Test 일반대화 정분류 수:</strong></p>
+    <table>
+      <tr><th>차등 비율</th><th>백본 LR</th><th>헤드 LR</th><th>Test 일반대화</th></tr>
+      <tr><td>1배 (동일)</td><td class="mono">2e-5</td><td class="mono">2e-5</td><td class="mono">69건</td></tr>
+      <tr><td>5배</td><td class="mono">4e-6</td><td class="mono">2e-5</td><td class="mono">74건</td></tr>
+      <tr><td class="best">10배</td><td class="mono best">2e-6</td><td class="mono best">2e-5</td><td class="mono best">77건</td></tr>
+    </table>
+    <p style="color:var(--text2); font-size:0.85rem; margin-top:8px;">차등 비율이 클수록 백본의 사전학습 표현을 보존하여 맥락 파악 능력 향상</p>
+  </div>
+
+  <h3>3-2. 레이어 동결 (Layer Freezing)</h3>
+  <div class="concept">
+    <strong>Concept: RoBERTa의 12층 구조와 동결</strong><br>
+    RoBERTa는 12개의 Transformer 인코더 층으로 구성됩니다. 하위 층은 일반적인 언어 패턴(형태소, 구문)을, 상위 층은 과제 특화된 의미를 학습합니다. 하위 9층을 동결하면 일반 언어 지식을 보존하면서 상위 3층만 위협 대화 분류에 맞게 조정합니다.
+  </div>
+
+  <pre>전체 파라미터: 111,114,248개 (111M)
+동결 (하위 9층 + 임베딩): 88,763,904개 (80%)
+학습 대상 (상위 3층 + 헤드): 22,350,344개 (20%)</pre>
+
+  <h3>3-3. 기타 하이퍼파라미터</h3>
+  <table>
+    <tr><th>항목</th><th>탐색 범위</th><th>최적값</th><th>근거</th></tr>
+    <tr><td>Dropout</td><td>0.1 / 0.3 / 0.5</td><td class="mono">0.3</td><td>0.1 ≈ 0.3 ≈ 0.5 차이 없음</td></tr>
+    <tr><td>Label Smoothing</td><td>0 / 0.1</td><td class="mono">0.1</td><td>Val +0.4%p, Test +3건</td></tr>
+    <tr><td>Warmup Ratio</td><td>—</td><td class="mono">0.1</td><td>학습 초기 안정성</td></tr>
+  </table>
+
+  <div class="concept">
+    <strong>Concept: Label Smoothing</strong><br>
+    정답 라벨을 [0, 0, 0, 0, 1] 대신 [0.02, 0.02, 0.02, 0.02, 0.92]로 부드럽게 만듦. 모델이 하나의 클래스에 과도하게 확신하는 것을 방지하여 일반화 성능을 개선합니다.
+  </div>
+
+  <p style="margin-top:12px;"><strong>확정:</strong> 차등 LR 10배 (Backbone 2e-6 / Head 2e-5) + LS 0.1 + Dropout 0.3 + 동결 9층</p>
+</div>
+
+<!-- ========== 4. Stage 3 ========== -->
+<h2 id="s4">4. Stage 3: 인코더 출력 활용 전략 — 풀링 구조 실험</h2>
+<div class="card">
+  <h3>4-1. 문제 정의: 인코더 출력을 어떻게 요약할 것인가</h3>
+  <div class="concept">
+    <strong>Concept: 풀링 (Pooling)</strong><br>
+    RoBERTa는 입력 텍스트의 각 토큰에 대해 768차원 벡터를 출력합니다. "야 빨리 타라 늦으면 다 죽어"가 입력이면, 11개 토큰 × 768차원 = (11, 768) 행렬이 출력. 이 행렬을 하나의 벡터(768차원)로 요약하는 것이 풀링이고, 이 요약 방식이 분류 성능에 영향을 줍니다.
+  </div>
+
+  <h3>4-2. 3가지 풀링 전략</h3>
+
+  <h4>A. Ending Pooling — 마무리 톤 중점 분석</h4>
+  <pre>대화 토큰: [CLS] 야 빨리 타라 늦으면 다 죽어 내가 운전할 ... [SEP]
+                                            └──── 마지막 64토큰 ────┘
+                                                    ↓ 평균
+                                              ending_pool (768d)</pre>
+  <p style="font-size:0.88rem; color:var(--text2);">설계 의도: 대화의 결말이 "화해/수긍"이면 일반, "위협/굴복"이면 위협</p>
+
+  <h4>B. Speaker-aware Pooling — 화자 분리 시도</h4>
+  <pre>토큰 포지션:  0    1    2    3    4    5    6    7
+화자 배정:    A    B    A    B    A    B    A    B
+              ↓              ↓
+         pool(짝수)     pool(홀수)
+              ↓              ↓
+         concat [A_pool, B_pool] → 1536d</pre>
+  <p style="font-size:0.88rem; color:var(--text2);">설계 의도: 화자 A/B를 분리하여 권력 비대칭 감지</p>
+
+  <h4>C. Multi-head — 다관점 분석</h4>
+  <pre>mean_pool (768d) → equality_head → 스칼라 (대등성)
+                  → ending_head   → 스칼라 (마무리)
+                  → threat_head   → 스칼라 (위협)
+                        ↓
+concat [mean_pool(768), eq(1), end(1), threat(1)] = 771d → 분류</pre>
+  <p style="font-size:0.88rem; color:var(--text2);">설계 의도: "대등성", "마무리 톤", "위협 의도"를 별도 헤드로 분석</p>
+
+  <h3>4-3. 실험 결과</h3>
+  <table>
+    <tr><th>구조</th><th>3ep Val F1</th><th>3ep Test</th><th>6ep Val F1</th><th>6ep Test</th></tr>
+    <tr><td>Ending Pooling</td><td class="mono">0.8808</td><td class="mono">78건</td><td class="mono">0.8994</td><td class="mono">84건</td></tr>
+    <tr><td>Speaker-aware</td><td class="mono">0.8947</td><td class="mono">85건</td><td class="mono">0.9113</td><td class="mono">85건</td></tr>
+    <tr style="background:rgba(245,158,11,0.06);">
+      <td><strong>Multi-head</strong></td><td class="mono">0.8848</td><td class="mono">84건</td><td class="mono best">0.9115</td><td class="mono best">88건</td></tr>
+  </table>
+
+  <div class="insight">
+    <strong>순위 역전:</strong> 3ep에서는 Speaker-aware(85건)가 1위 → 6ep에서 Multi-head(88건)가 역전. Multi-head는 수렴이 느리지만 충분한 학습 시 더 높은 성능 도달.
+  </div>
+</div>
+
+<!-- ========== 5. 심층 분석 ========== -->
+<h2 id="s5">5. 심층 분석: 토크나이저부터 분류 헤드까지</h2>
+<div class="card">
+  <h3>5-1. 전체 파이프라인</h3>
+  <pre>
+입력: "야 빨리 타라 늦으면 다 죽어 내가 운전할 테니까"
+                    ↓
+┌─────────────────────────────────────────────────┐
+│ (1) 토크나이저 (WordPiece)                       │
+│  → [CLS] 야 빨리 타 ##라 늦 ##으면 다 죽 ##어 ... [SEP]  │
+│  → 각 토큰에 고유 ID 부여 (vocab 32,000개)         │
+└─────────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────────┐
+│ (2) 임베딩 (3가지 합산)                           │
+│  Token Embedding:    "야" → 768차원 의미 벡터      │
+│  Position Embedding: "3번째 위치" → 768차원 위치 벡터 │
+│  → 합산 후 LayerNorm                             │
+└─────────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────────┐
+│ (3) Transformer 인코더 12층                      │
+│  각 층: Self-Attention → Feed-Forward            │
+│  Self-Attention: 모든 토큰이 다른 모든 토큰과 관계 계산  │
+│  → "죽어"가 "게임" 맥락인지 "위협" 맥락인지 파악       │
+│  하위 9층: 동결 (일반 언어 지식 보존)               │
+│  상위 3층: 학습 (위협 분류 특화)                    │
+└─────────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────────┐
+│ (4) 풀링 → 분류 헤드                             │
+│  (11, 768) 행렬 → Mean Pooling → (768,) 벡터    │
+│  → Linear(768→256) → GELU → Dropout → Linear(256→5) │
+│  → Softmax → 5클래스 확률                         │
+└─────────────────────────────────────────────────┘</pre>
+
+  <h3>5-2. Self-Attention이 하는 일</h3>
+  <div class="concept">
+    <strong>Concept: Self-Attention과 문맥 파악</strong><br>
+    같은 "죽어"라는 토큰이라도 주변 토큰에 따라 다른 벡터로 변환됩니다:<br><br>
+    <code>"늦으면 다 <strong>죽어</strong> 내가 운전할 테니까"</code> → 게임 맥락의 "죽어" 벡터<br>
+    <code>"시키는 대로 안 하면 <strong>죽어</strong>"</code> → 위협 맥락의 "죽어" 벡터<br><br>
+    Self-Attention이 주변 토큰("게임", "운전" vs "시키는 대로")과의 관계를 계산하여, 동일 단어에 다른 의미를 부여합니다.
+  </div>
+
+  <h3>5-3. 임베딩 공간에서의 의미 관계</h3>
+  <div class="card-inner">
+    <p>토큰 임베딩 간 코사인 유사도 (사전학습 상태):</p>
+    <table>
+      <tr><th>토큰 쌍</th><th>유사도</th><th>해석</th></tr>
+      <tr><td>"빨리" vs "얼른"</td><td class="mono up">0.5634</td><td>유사한 의미 → 높은 유사도</td></tr>
+      <tr><td>"죽" vs "죽이"</td><td class="mono">0.4973</td><td>관련 의미 → 중간 유사도</td></tr>
+      <tr><td>"죽" vs "살"</td><td class="mono">0.3405</td><td>반의어 → 낮은 유사도</td></tr>
+      <tr><td>"." vs "?"</td><td class="mono down">0.1442</td><td>의미적으로 무관 → 매우 낮음</td></tr>
+    </table>
+    <p style="color:var(--text2); font-size:0.85rem; margin-top:8px;">토크나이저는 의미 단위를 잘 구분하고 있으며, 구두점(<code>.</code> <code>?</code>)은 의미와 무관한 독립 토큰으로 처리됨</p>
+  </div>
+</div>
+
+<!-- ========== 6. 숏컷 발견 ========== -->
+<h2 id="s6">6. 숏컷 학습 발견과 검증</h2>
+<div class="card">
+  <h3>6-1. 문제: 왜 88건에서 멈추는가</h3>
+  <p>최고 모델(M3-D, 6ep)이 Test 일반대화 100건 중 88건만 정분류. 원인을 추적했습니다.</p>
+
+  <h3>6-2. 마침표 개수별 분류 분석</h3>
+  <table>
+    <tr><th>마침표 개수</th><th>Test 샘플</th><th>일반대화 예측</th><th>비율</th></tr>
+    <tr><td class="mono">0개</td><td class="mono">152건</td><td class="mono best">77건</td><td class="mono best">50.7%</td></tr>
+    <tr><td class="mono">1~2개</td><td class="mono">65건</td><td class="mono down">0건</td><td class="mono down">0.0%</td></tr>
+    <tr><td class="mono">3~5개</td><td class="mono">101건</td><td class="mono">6건</td><td class="mono">5.9%</td></tr>
+    <tr><td class="mono">6~10개</td><td class="mono">92건</td><td class="mono">5건</td><td class="mono">5.4%</td></tr>
+    <tr><td class="mono">11+개</td><td class="mono">90건</td><td class="mono down">0건</td><td class="mono down">0.0%</td></tr>
+  </table>
+
+  <div class="warn">
+    88건 중 77건(87.5%)이 마침표 0개. 마침표가 1개만 있어도 일반대화 예측이 0%로 급락. 하지만 마침표 0개여도 75건은 위협으로 분류 — <strong>구두점이 유일한 기준은 아니지만 보조적 숏컷으로 작용</strong>.
+  </div>
+
+  <h3>6-3. 길이별 분류 분석 — 더 본질적인 문제</h3>
+  <table>
+    <tr><th>길이</th><th>Test 샘플</th><th>일반대화 예측</th><th>비율</th></tr>
+    <tr><td class="mono">0~120자</td><td class="mono">60건</td><td class="mono">15건</td><td class="mono">25.0%</td></tr>
+    <tr><td class="mono">121~200자</td><td class="mono">227건</td><td class="mono">53건</td><td class="mono">23.3%</td></tr>
+    <tr><td class="mono">201~250자</td><td class="mono">86건</td><td class="mono">11건</td><td class="mono down">12.8%</td></tr>
+    <tr><td class="mono">251자+</td><td class="mono">127건</td><td class="mono">9건</td><td class="mono down">7.1%</td></tr>
+  </table>
+
+  <div class="insight">
+    <strong>길이가 더 체계적인 숏컷:</strong> 긴 대화(251자+)에서 일반대화 예측이 7.1%로 급감. 원인은 Train 일반대화 평균 122자 vs Train 위협 214자 — 합성 일반대화가 짧게 생성되어 모델이 "긴 대화 = 위협"으로 학습.
+  </div>
+
+  <h3>6-4. 원인: 합성 데이터 분포 불일치</h3>
+  <table>
+    <tr><th>지표</th><th>Train 일반대화</th><th>Train 위협</th><th>Test 전체</th></tr>
+    <tr><td>마침표</td><td class="mono down">0.35개/건</td><td class="mono">5.97개/건</td><td class="mono">4.99개/건</td></tr>
+    <tr><td>평균 길이</td><td class="mono down">122자</td><td class="mono">214자</td><td class="mono">214자</td></tr>
+    <tr><td>평균 토큰</td><td class="mono down">60개</td><td class="mono">109~130개</td><td class="mono">116개</td></tr>
+  </table>
+  <p style="font-size:0.88rem; color:var(--text2); margin-top:8px;">합성 일반대화 생성 프롬프트의 예시가 짧고 구두점 없는 형태여서, LLM이 그 스타일을 모방하여 3,000건 전부 비슷하게 생성한 것이 근본 원인.</p>
+</div>
+
+<!-- ========== 7. 후속 실험 ========== -->
+<h2 id="s7">7. 후속 실험: 숏컷 극복 시도</h2>
+<div class="card">
+  <h3>7-1. 구두점 제거 실험</h3>
+  <div class="card-inner">
+    <p><strong>가설:</strong> 구두점이 숏컷 → 제거하면 모델이 의미 기반으로 전환</p>
+    <p><strong>방법:</strong> 전처리에서 <code>. ? !</code> 제거 후 동일 조건 학습</p>
+    <table>
+      <tr><th></th><th>M3-D (구두점 有)</th><th>구두점 제거</th></tr>
+      <tr><td>Val F1</td><td class="mono">0.8848</td><td class="mono">0.8805</td></tr>
+      <tr><td>Test 일반</td><td class="mono">84건</td><td class="mono down">75건</td></tr>
+    </table>
+    <p style="color:var(--text2); margin-top:8px;"><strong>결과:</strong> 오히려 하락. 구두점이 위협 데이터에서 턴 경계 역할(80.8%)도 했기 때문에, 제거 시 위협 분류 능력까지 손상.</p>
+  </div>
+
+  <h3>7-2. 청크 흐름 구조</h3>
+  <div class="card-inner">
+    <p><strong>가설:</strong> 대화의 전반→후반 변화(에스컬레이션 vs 해소)가 분류 핵심</p>
+    <pre>first_half  = mean_pool(hidden[1 : L//2])     // 전반부
+second_half = mean_pool(hidden[L//2 : L-1])   // 후반부
+diff = second_half - first_half                // 변화 벡터
+→ concat [first, second, diff] = 2304d → 분류</pre>
+    <p><strong>근거 — 같은 키워드, 다른 흐름:</strong></p>
+    <pre>일반: "새끼야 살빼" → "팩트라 할말없네"     = 수긍 (diff → 완화 방향)
+위협: "새끼야 살빼" → "죄송합니다 그만해주세요" = 굴복 (diff → 비대칭 방향)</pre>
+    <table>
+      <tr><th></th><th>구두점제거 + Mean Pool</th><th>구두점제거 + 청크 흐름</th></tr>
+      <tr><td>Val F1</td><td class="mono">0.8805</td><td class="mono up">0.8965</td></tr>
+      <tr><td>Test 일반</td><td class="mono">75건</td><td class="mono">75건</td></tr>
+    </table>
+    <p style="color:var(--text2); margin-top:8px;"><strong>결과:</strong> Val F1은 +1.6%p 개선되어 구조의 우위는 확인. 그러나 Test 일반대화는 동일 — 구두점 제거로 인한 정보 손실이 구조 개선을 상쇄.</p>
+  </div>
+
+  <h3>7-3. 지배/복종 피처</h3>
+  <div class="card-inner">
+    <p><strong>가설:</strong> 위협 대화에는 "지배 표현 + 복종 표현"이 공존, 일반 대화에는 없음</p>
+    <table>
+      <tr><th>클래스</th><th>지배+복종 공존</th><th>둘 다 없음</th></tr>
+      <tr><td>협박</td><td class="mono down">33.0%</td><td class="mono">18.0%</td></tr>
+      <tr><td>갈취</td><td class="mono">14.9%</td><td class="mono">37.6%</td></tr>
+      <tr><td class="best">일반</td><td class="mono best">0.2%</td><td class="mono best">88.5%</td></tr>
+    </table>
+    <p><strong>매우 뚜렷한 신호.</strong> 그러나 5개 수동 피처 추가 시 Test 84→83건으로 유의미한 개선 없음 — 어휘 리스트 기반 피처의 커버리지 한계.</p>
+  </div>
+
+  <div class="insight">
+    <strong>후속 실험 종합:</strong> 모델 구조 변경(청크 흐름, 피처 추가)으로는 한계. 88건이라는 천장은 <strong>합성 일반대화 데이터의 분포(길이, 문체, 구두점)</strong>가 만든 것이며, 데이터 품질 개선이 근본 해결책.
+  </div>
+</div>
+
+<!-- ========== 8. 구조 재평가 ========== -->
+<h2 id="s8">8. 구조 재평가 — 설계 의도 vs 실제 구현 검증</h2>
+<div class="card">
+  <p>Stage 3 실험 후 코드 레벨에서 각 모델의 실제 작동을 검증했습니다.</p>
+
+  <h3>8-1. 발견된 문제</h3>
+  <table>
+    <tr><th>모델</th><th>설계 의도</th><th>실제 구현</th><th>판정</th></tr>
+    <tr>
+      <td><strong>Multi-head</strong></td>
+      <td>3개 헤드가 각각 대등성/마무리/위협을 다른 관점에서 분석</td>
+      <td>3개 헤드가 <strong>같은 mean pool 벡터</strong>를 입력으로 받음 → 단순 차원 추가 효과</td>
+      <td><span class="tag tag-red">불일치</span></td>
+    </tr>
+    <tr>
+      <td><strong>Speaker-aware</strong></td>
+      <td>화자 A/B를 분리하여 권력 비대칭 감지</td>
+      <td><strong>토큰 포지션 짝수/홀수</strong>로 분리 → 실제 화자 구분과 무관</td>
+      <td><span class="tag tag-red">불일치</span></td>
+    </tr>
+    <tr>
+      <td><strong>Ending Pooling</strong></td>
+      <td>마무리 톤 중점 분석</td>
+      <td>마지막 64토큰만 풀링 → 의도대로 작동</td>
+      <td><span class="tag tag-green">일치</span></td>
+    </tr>
+  </table>
+
+  <h3>8-2. 올바른 Multi-head 재설계 및 검증</h3>
+  <pre>수정된 설계:
+  equality → pool(전반부) vs pool(후반부) → diff → 스칼라  ← 다른 영역
+  ending   → pool(마지막 64토큰) → 스칼라               ← 다른 영역
+  threat   → pool(전체) → 스칼라                        ← 다른 영역</pre>
+
+  <table>
+    <tr><th>모델 (3ep)</th><th>Val F1</th><th>Test 일반</th></tr>
+    <tr><td>Mean Pool (베이스라인)</td><td class="mono">0.878</td><td class="mono">81건</td></tr>
+    <tr><td>기존 Multi-head (같은 입력)</td><td class="mono">0.8848</td><td class="mono">84건</td></tr>
+    <tr><td>수정 Multi-head (다른 영역)</td><td class="mono">0.8848</td><td class="mono">84건</td></tr>
+  </table>
+
+  <div class="insight">
+    <strong>결론:</strong> 기존과 수정 Multi-head가 3ep에서 동일 성능. "각 헤드가 어떤 영역을 보느냐"보다 "보조 스칼라 3개가 추가된다"는 사실 자체가 Mean Pool(81건) 대비 +3건 효과를 줌. 설계 방식의 차이는 3ep 단위에서 유의미하지 않음. (10ep 실험 진행 중)
+  </div>
+
+  <h3>8-3. Speaker-aware가 근본적으로 불가능한 이유</h3>
+  <div class="card-inner">
+    <p>Test 데이터의 어절 경계 분석:</p>
+    <table>
+      <tr><th>구분</th><th>비율</th></tr>
+      <tr><td>구두점 뒤 공백 (턴 경계 힌트)</td><td class="mono">13.4%</td></tr>
+      <tr><td><strong>순수 공백만 (턴 구분 없음)</strong></td><td class="mono down"><strong>86.6%</strong></td></tr>
+    </table>
+    <p style="margin-top:8px;">Test의 86.6%가 턴 구분 없는 연속 텍스트. Train에서 화자를 분리해 학습하더라도 <strong>Test에서는 턴 경계가 없어 추론 시 활용 불가</strong>. Train-Test 형식 일관성이 전제 조건.</p>
+  </div>
+</div>
+
+<!-- ========== 9. 최종 결과 ========== -->
+<h2 id="s9">9. 최종 결과 및 교훈</h2>
+<div class="card">
+  <h3>9-1. 전체 실험 성능 비교</h3>
+  <table>
+    <tr><th>실험</th><th>구두점</th><th>구조</th><th>Val F1</th><th>Test 일반</th></tr>
+    <tr><td>Mean Pool (3ep)</td><td>유지</td><td>Mean Pool</td><td class="mono">0.878</td><td class="mono">81건</td></tr>
+    <tr><td>Multi-head (3ep)</td><td>유지</td><td>Multi-head</td><td class="mono">0.8848</td><td class="mono">84건</td></tr>
+    <tr style="background:rgba(245,158,11,0.06);">
+      <td><strong>Multi-head (6ep)</strong></td><td>유지</td><td>Multi-head</td><td class="mono best">0.9115</td><td class="mono best">88건</td></tr>
+    <tr><td>Final (동결해제, 6ep)</td><td>유지</td><td>Multi-head</td><td class="mono">0.9248</td><td class="mono down">77건</td></tr>
+    <tr><td>구두점 제거 (3ep)</td><td>제거</td><td>Multi-head</td><td class="mono">0.8805</td><td class="mono">75건</td></tr>
+    <tr><td>청크 흐름 (3ep)</td><td>제거</td><td>전반/후반 비교</td><td class="mono">0.8965</td><td class="mono">75건</td></tr>
+    <tr><td>지배/복종 피처 (3ep)</td><td>유지</td><td>Multi-head + 5피처</td><td class="mono">0.8877</td><td class="mono">83건</td></tr>
+  </table>
+
+  <h3>9-2. 최종 선정 모델</h3>
+  <div class="card-inner" style="text-align:center; padding:20px;">
+    <span class="tag tag-gold" style="font-size:0.95rem; padding:6px 18px;">SELECTED</span>
+    <h3 style="color:var(--cyan); font-size:1.2rem; margin:10px 0;">M3-D-e6 Multi-head (동결 9층, 6 Epoch)</h3>
+    <p style="color:var(--text2);">Val F1 0.9115 | Test 일반대화 88/100건</p>
+  </div>
+
+  <h3>9-3. 핵심 교훈</h3>
+
+  <div class="card-inner">
+    <p><strong style="color:var(--cyan);">1. 데이터 분포가 모델 구조를 압도한다</strong></p>
+    <p style="font-size:0.88rem;">합성 일반대화의 길이/구두점 분포 불일치 하나가, 모델 구조 변경(3가지), 에폭 증가, 동결 해제보다 더 큰 영향. 구두점 제거, 청크 흐름, 피처 추가 등 모든 구조적 시도가 88건의 벽을 넘지 못함.</p>
+  </div>
+
+  <div class="card-inner">
+    <p><strong style="color:var(--cyan);">2. "Val 맹신 금지" — 검증 세트의 한계</strong></p>
+    <p style="font-size:0.88rem;">Final Run: Val 0.9248(최고) → Test 77건(최저). Val 세트가 합성 데이터와 같은 분포이므로 Val 성능이 Test 일반화를 보장하지 않음. 동결 9층 모델이 과적합을 방지하여 오히려 Test에서 우수.</p>
+  </div>
+
+  <div class="card-inner">
+    <p><strong style="color:var(--cyan);">3. 설계 의도와 실제 구현을 코드 레벨에서 검증해야 한다</strong></p>
+    <p style="font-size:0.88rem;">Speaker-aware(토큰 짝홀수 ≠ 화자 분리), Multi-head(같은 입력에서 스칼라 3개 ≠ 다관점 분석)가 설계 의도와 불일치. 구조를 만들었으면 <strong>실제로 의도한 정보를 보고 있는지</strong> 검증이 필수.</p>
+  </div>
+
+  <div class="card-inner">
+    <p><strong style="color:var(--cyan);">4. 숏컷은 성능 지표만으로 보이지 않는다</strong></p>
+    <p style="font-size:0.88rem;">Val F1 0.91, Test 88건이면 "잘 작동한다"고 생각하기 쉽지만, 마침표별/길이별 분류율을 분석하면 숏컷 의존이 드러남. 예측 결과의 <strong>분포를 분석</strong>하는 습관이 중요.</p>
+  </div>
+
+  <div class="card-inner">
+    <p><strong style="color:var(--cyan);">5. 대화 분류의 본질은 "흐름"과 "역학"</strong></p>
+    <p style="font-size:0.88rem;">개별 키워드("죽여", "새끼")가 아니라 청크 간 관계(수긍 vs 굴복, 에스컬레이션 vs 해소)가 위협과 일반을 가름. 같은 "새끼야 살빼"도 후반부가 "팩트라 할말없네"(대등)인지 "죄송합니다"(비대칭)인지에 따라 클래스가 달라짐.</p>
+  </div>
+</div>
+
+<div class="footer">
+  DLthon DKTC 모델 선정 및 개선 과정 보고서 | 아이펠 온라인 17기 | 2026-04-27
+</div>
+
+</div>
+</body>
+</html>

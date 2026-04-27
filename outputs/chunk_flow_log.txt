@@ -1,0 +1,34 @@
+Device: cpu
+Train: 15000 | Val: 965 | Test: 500
+
+============================================================
+청크 흐름 실험 | 구두점 제거 + 전반/후반 비교 | Epoch 3 | 동결 9층
+============================================================
+Some weights of RobertaModel were not initialized from the model checkpoint at klue/roberta-base and are newly initialized: ['pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+  전체: 111,866,117 | 학습: 23,102,213 (20.7%)
+  Epoch 1 | Train F1: 0.5913 | Val F1: 0.8413 | 1578s << BEST
+  Epoch 2 | Train F1: 0.8607 | Val F1: 0.8877 | 1664s << BEST
+  Epoch 3 | Train F1: 0.8822 | Val F1: 0.8965 | 1633s << BEST
+
+  >> Best: Epoch 3 | Val F1: 0.8965 | 일반대화 F1: 0.9719 | 81.3분
+              precision    recall  f1-score   support
+
+       갈취 대화     0.8660    0.8615    0.8638       195
+   기타 괴롭힘 대화     0.8667    0.8450    0.8557       200
+ 직장 내 괴롭힘 대화     0.9034    0.9639    0.9327       194
+       협박 대화     0.8636    0.8539    0.8588       178
+       일반 대화     0.9845    0.9596    0.9719       198
+
+    accuracy                         0.8974       965
+   macro avg     0.8968    0.8968    0.8965       965
+weighted avg     0.8975    0.8974    0.8972       965
+
+  >> Test 일반대화: 75건 / 100건
+  >> Test 분포: {'갈취 대화': 112, '직장 내 괴롭힘 대화': 112, '기타 괴롭힘 대화': 106, '협박 대화': 95, '일반 대화': 75}
+
+  >> Submission 저장 완료
+
+============================================================
+청크 흐름 실험 완료! | Val F1: 0.8965 | Test 일반: 75건 | 81.3분
+============================================================

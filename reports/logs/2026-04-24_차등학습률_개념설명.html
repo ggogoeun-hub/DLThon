@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>차등 학습률 개념 — DKTC 실제 사례</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e17;--card:#1a2332;--card2:#141e2d;--border:#2a3545;--text:#e2e8f0;--text2:#8892a4;--cyan:#06b6d4;--yellow:#f59e0b;--red:#ef4444;--blue:#3b82f6;--green:#10b981;--purple:#a78bfa}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.8;padding:20px}
+.container{max-width:780px;margin:0 auto}
+h1{color:var(--cyan);font-size:1.6em;margin-bottom:4px}
+h2{color:var(--cyan);font-size:1.2em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+h3{color:var(--yellow);font-size:1em;margin:20px 0 10px}
+.subtitle{color:var(--text2);font-size:0.93em;margin-bottom:28px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin:14px 0}
+.card-inner{background:var(--card2);border-radius:8px;padding:16px;margin:10px 0}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:0.9em}
+th{background:var(--card2);color:var(--cyan);padding:10px 12px;text-align:left;font-weight:600}
+td{padding:9px 12px;border-bottom:1px solid var(--border)}
+.num{font-family:'JetBrains Mono',monospace;color:var(--yellow);font-weight:500}
+pre{background:var(--card2);padding:16px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:0.85em;line-height:1.6;margin:10px 0;overflow-x:auto}
+.insight{border-left:3px solid var(--yellow);padding:12px 16px;margin:14px 0;background:rgba(245,158,11,0.05);border-radius:0 8px 8px 0}
+.insight.danger{border-left-color:var(--red);background:rgba(239,68,68,0.05)}
+.insight.success{border-left-color:var(--green);background:rgba(16,185,129,0.05)}
+.analogy{background:linear-gradient(135deg, rgba(6,182,212,0.08), rgba(167,139,250,0.08));border:1px solid rgba(6,182,212,0.2);border-radius:12px;padding:20px;margin:16px 0}
+.analogy-title{color:var(--cyan);font-weight:600;font-size:1.05em;margin-bottom:10px}
+.vs{display:flex;gap:16px;margin:12px 0;flex-wrap:wrap}
+.vs-box{flex:1;min-width:280px;border-radius:8px;padding:16px}
+.vs-box.good{background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2)}
+.vs-box.bad{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2)}
+.vs-box h4{margin-bottom:8px;font-size:0.95em}
+.vs-box.good h4{color:var(--green)}
+.vs-box.bad h4{color:var(--red)}
+.footer{text-align:center;color:var(--text2);font-size:0.8em;margin-top:40px;padding-top:20px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>차등 학습률 (Discriminative Learning Rate)</h1>
+<p class="subtitle">DKTC 한국어 위협 대화 분류 실제 사례로 이해하기 | 2026-04-24</p>
+
+<!-- 비유 -->
+<h2>1. 비유: 경력자와 신입사원</h2>
+<div class="analogy">
+  <div class="analogy-title">모델 = 회사라고 생각하면</div>
+<pre style="background:transparent;border:none;padding:0;margin:8px 0">
+모델 전체 (110M 파라미터)
+│
+├── <span style="color:var(--cyan)">백본 (RoBERTa)</span>        ← "경력자" (이미 한국어를 잘 앎)
+│   110,600,000개 (99.8%)
+│   └── LR = <span style="color:var(--green)">4e-6</span>       → 살살 가르침 (기존 지식 망가뜨리면 안 되니까)
+│
+└── <span style="color:var(--yellow)">분류 헤드 (FC층)</span>      ← "신입사원" (위협/일반 구분은 처음)
+    198,000개 (0.2%)
+    └── LR = <span style="color:var(--yellow)">2e-5</span>       → 빡세게 가르침 (빨리 배워야 하니까)
+</pre>
+  <p style="color:var(--text2);font-size:0.9em">LR 비율 = 2e-5 / 4e-6 = <strong>5배 차이</strong>. 신입에게 5배 더 강하게 교육하는 셈.</p>
+</div>
+
+<!-- 왜 필요한가 -->
+<h2>2. 왜 차등 학습률이 필요한가</h2>
+<div class="card">
+  <p>RoBERTa 백본은 이미 <strong>수십억 개의 한국어 문장</strong>으로 학습되어 있습니다.</p>
+  <p>"죽다", "돈", "회사" 같은 단어의 의미와 문맥을 <strong>이미</strong> 알고 있어요.</p>
+  <p style="margin-top:10px">이 상태에서 학습률을 어떻게 주느냐에 따라 결과가 달라집니다:</p>
+</div>
+
+<div class="vs">
+  <div class="vs-box bad">
+    <h4>백본 LR이 크면 (2e-5) — 단일 학습률</h4>
+    <p style="font-size:0.9em;color:var(--text2)">
+      "죽겠다" → 원래 "힘들다는 비유"도 알고 있었는데<br>
+      → 학습 데이터에서 "죽" = 협박으로 많이 봄<br>
+      → 기존 지식이 <strong>덮어씌워짐</strong> (Catastrophic Forgetting)<br>
+      → <span style="color:var(--red)">"야 배고파 죽겠다"도 협박으로 분류</span>
+    </p>
+  </div>
+  <div class="vs-box good">
+    <h4>백본 LR이 작으면 (4e-6) — 차등 학습률</h4>
+    <p style="font-size:0.9em;color:var(--text2)">
+      → 기존 한국어 지식은 <strong>보존</strong>하면서<br>
+      → "이 과제에서 중요한 부분만" 미세하게 조정<br>
+      → "죽겠다"의 다양한 맥락을 여전히 구분 가능<br>
+      → <span style="color:var(--green)">"배고파 죽겠다" = 일상, "죽여버린다" = 협박</span>
+    </p>
+  </div>
+</div>
+
+<div class="insight">
+  <strong>핵심:</strong> 사전학습된 모델은 이미 "언어를 이해하는 능력"을 갖고 있습니다. 이 능력을 유지하면서 "우리 과제에 맞게만" 살짝 조정하는 것이 차등 학습률의 목적입니다.
+</div>
+
+<!-- DKTC 실제 사례 -->
+<h2>3. DKTC에서의 실제 사례</h2>
+<div class="card">
+  <h3>같은 단어, 다른 맥락 — 이걸 구분해야 합니다</h3>
+  <table>
+    <tr><th>표현</th><th>일반 대화 (무해)</th><th>위협 대화 (유해)</th></tr>
+    <tr>
+      <td style="font-weight:600">"죽겠다"</td>
+      <td style="color:var(--green)">"배고파 죽겠다" → 비유</td>
+      <td style="color:var(--red)">"죽여버리기 전에 말해" → 실제 위협</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600">"돈"</td>
+      <td style="color:var(--green)">"만원만 빌려줘" → 친구 사이</td>
+      <td style="color:var(--red)">"돈 안 내면 죽인다" → 갈취</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600">"야 죽을래"</td>
+      <td style="color:var(--green)">설거지 안 한 동생에게 → 관용 표현</td>
+      <td style="color:var(--red)">"한번만 더 그러면 죽을래?" → 협박</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600">"부장님"</td>
+      <td style="color:var(--green)">"부장님 점심 뭐 드실래요?" → 직장 일상</td>
+      <td style="color:var(--red)">"부장님이 또 인신공격을..." → 직장 괴롭힘</td>
+    </tr>
+  </table>
+
+  <div class="insight success">
+    RoBERTa 백본은 이미 이런 <strong>맥락 차이를 이해하는 능력</strong>을 갖고 있습니다. 차등 학습률은 이 능력을 망가뜨리지 않으면서 "5개 클래스로 분류하는 법"만 새로 가르치는 전략입니다.
+  </div>
+</div>
+
+<!-- 코드로 보기 -->
+<h2>4. 코드로 보면</h2>
+<div class="card">
+  <h3>단일 학습률 (모두 같은 속도로 학습)</h3>
+<pre>
+<span style="color:var(--text2)"># 전체 파라미터에 동일한 LR 적용</span>
+optimizer = AdamW(model.parameters(), lr=<span style="color:var(--red)">2e-5</span>)
+<span style="color:var(--text2)"># → 백본도 2e-5, 헤드도 2e-5</span>
+<span style="color:var(--text2)"># → "경력자도 신입처럼 빡세게" → 기존 지식 손상 위험</span>
+</pre>
+
+  <h3>차등 학습률 (역할에 맞는 속도로 학습)</h3>
+<pre>
+<span style="color:var(--text2)"># 백본과 헤드를 분리</span>
+optimizer = AdamW([
+    {<span style="color:var(--green)">'params': backbone_params, 'lr': 4e-6</span>},  <span style="color:var(--text2)"># 살살</span>
+    {<span style="color:var(--yellow)">'params': head_params,     'lr': 2e-5</span>},  <span style="color:var(--text2)"># 빡세게</span>
+])
+<span style="color:var(--text2)"># → 백본 지식 보존 + 헤드 빠른 학습</span>
+</pre>
+</div>
+
+<!-- Ablation으로 검증 -->
+<h2>5. 2단계 Ablation Test에서 검증하는 것</h2>
+<div class="card">
+  <p>"차등 학습률이 정말 효과가 있는지" <strong>빼보고 비교</strong>합니다:</p>
+
+  <table>
+    <tr><th>실험</th><th>백본 LR</th><th>헤드 LR</th><th>비유</th><th>질문</th></tr>
+    <tr>
+      <td class="num">M2-A</td>
+      <td class="num" style="color:var(--red)">2e-5</td>
+      <td class="num">2e-5</td>
+      <td>경력자도 빡세게</td>
+      <td>"차등 없이도 괜찮아?"</td>
+    </tr>
+    <tr style="background:rgba(16,185,129,0.06)">
+      <td class="num">M2-B</td>
+      <td class="num" style="color:var(--green)">4e-6</td>
+      <td class="num">2e-5</td>
+      <td>경력자 살살, 신입 빡세게</td>
+      <td>기준선 (B04 원본)</td>
+    </tr>
+    <tr>
+      <td class="num">M2-C</td>
+      <td class="num" style="color:var(--blue)">2e-6</td>
+      <td class="num">2e-5</td>
+      <td>경력자 더더 살살</td>
+      <td>"더 보수적이면 더 나아?"</td>
+    </tr>
+  </table>
+
+  <div class="card-inner" style="margin-top:14px">
+    <p><strong>예상 시나리오:</strong></p>
+    <p style="color:var(--text2);font-size:0.9em;margin:6px 0">
+      <span style="color:var(--red)">M2-A 성능 하락</span> → "차등 학습률이 필수다" 증명<br>
+      <span style="color:var(--green)">M2-B ≈ M2-C</span> → "4e-6이면 충분, 더 낮출 필요 없다"<br>
+      <span style="color:var(--blue)">M2-C > M2-B</span> → "백본을 더 보수적으로 다뤄야 한다"
+    </p>
+  </div>
+
+  <div class="insight">
+    <strong>이것이 Ablation Study의 가치:</strong> "남들이 쓰니까"가 아니라 "빼봤더니 성능이 X%p 떨어졌으니까"라고 근거를 댈 수 있습니다.
+  </div>
+</div>
+
+<!-- 왜 이 개념이 중요한가 -->
+<h2>6. 왜 이 개념이 중요한가</h2>
+<div class="card">
+  <h3>Transfer Learning의 핵심 딜레마</h3>
+  <div class="analogy" style="margin-top:10px">
+    <p style="font-size:0.95em">
+      사전학습 모델을 사용하는 모든 NLP/CV 프로젝트에서 마주치는 질문:<br><br>
+      <strong>"기존에 배운 것은 얼마나 유지하고, 새로운 것은 얼마나 빠르게 배울 것인가?"</strong><br><br>
+      <span style="color:var(--text2)">
+      유지를 너무 많이 하면 → 새 과제에 적응 못 함 (Underfitting)<br>
+      새 학습을 너무 많이 하면 → 기존 지식 손실 (Catastrophic Forgetting)<br><br>
+      </span>
+      차등 학습률은 이 <strong>균형점</strong>을 찾는 가장 실용적인 방법입니다.
+    </p>
+  </div>
+
+  <h3>DKTC 프로젝트에서의 의미</h3>
+  <p style="color:var(--text2);font-size:0.9em;margin-top:8px">
+    B02에서 Val F1 0.99인데 Test 23건이었던 이유 중 하나가 바로 이것일 수 있습니다.
+    모델이 "합성 데이터의 패턴"을 너무 빠르게 외워버리면서 "한국어 문맥을 이해하는 능력"이 손상되었을 가능성.
+    차등 학습률은 이런 과적합을 구조적으로 방지합니다.
+  </p>
+</div>
+
+<div class="footer">
+  <p>차등 학습률 개념 설명 | DKTC DLthon 프로젝트 | 2026-04-24</p>
+  <p style="margin-top:4px">2단계 Ablation Test(M2-A/B/C)에서 실제 효과를 검증 예정</p>
+</div>
+
+</div>
+</body>
+</html>

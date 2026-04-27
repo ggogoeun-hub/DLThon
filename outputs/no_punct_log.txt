@@ -1,0 +1,37 @@
+Device: cpu
+Train: 15000 | Val: 965 | Test: 500
+  Train 일반: 마침표 0.000개/건 (0이어야 함)
+  Train 위협: 마침표 0.000개/건 (0이어야 함)
+  Test: 마침표 0.000개/건 (0이어야 함)
+
+============================================================
+구두점 제거 실험 | Multi-head | Epoch 3 | 동결 9층
+============================================================
+Some weights of RobertaModel were not initialized from the model checkpoint at klue/roberta-base and are newly initialized: ['pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+  전체: 111,114,248 | 학습: 22,350,344 (20.1%)
+  Epoch 1 | Train F1: 0.5907 | Val F1: 0.8349 | 1571s << BEST
+  Epoch 2 | Train F1: 0.8494 | Val F1: 0.8762 | 1565s << BEST
+  Epoch 3 | Train F1: 0.8755 | Val F1: 0.8805 | 1567s << BEST
+
+  >> Best: Epoch 3 | Val F1: 0.8805 | 일반대화 F1: 0.9351 | 78.4분
+              precision    recall  f1-score   support
+
+       갈취 대화     0.8534    0.8359    0.8446       195
+   기타 괴롭힘 대화     0.8458    0.8500    0.8479       200
+ 직장 내 괴롭힘 대화     0.9059    0.9433    0.9242       194
+       협박 대화     0.8370    0.8652    0.8508       178
+       일반 대화     0.9626    0.9091    0.9351       198
+
+    accuracy                         0.8808       965
+   macro avg     0.8809    0.8807    0.8805       965
+weighted avg     0.8817    0.8808    0.8810       965
+
+  >> Test 일반대화: 75건 / 100건
+  >> Test 분포: {'직장 내 괴롭힘 대화': 117, '갈취 대화': 111, '기타 괴롭힘 대화': 102, '협박 대화': 95, '일반 대화': 75}
+
+  >> Submission 저장 완료
+
+============================================================
+구두점 제거 실험 완료! | Val F1: 0.8805 | Test 일반: 75건 | 78.4분
+============================================================

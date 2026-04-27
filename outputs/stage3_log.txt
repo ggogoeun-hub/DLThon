@@ -1,0 +1,179 @@
+Device: cpu
+Train: 15000 | Val: 965 | Test: 500
+
+============================================================
+Stage 3 + 추가 HP | 6종 | CPU
+============================================================
+
+============================================================
+[M2-H1] Dropout 0.1
+============================================================
+Some weights of RobertaModel were not initialized from the model checkpoint at klue/roberta-base and are newly initialized: ['pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+  백본 동결: 하위 9층 + 임베딩
+  백본 파라미터: 110,618,112 (학습: 21,854,208 | 동결: 88,763,904)
+  전체: 110,817,797 | 학습: 22,053,893 (19.9%)
+  Epoch 1 | Train F1: 0.5982 | Val F1: 0.8488 | 1631s << BEST
+  Epoch 2 | Train F1: 0.8664 | Val F1: 0.8785 | 2174s << BEST
+  Epoch 3 | Train F1: 0.8910 | Val F1: 0.8754 | 1608s
+
+  >> Best: Epoch 2 | Val F1: 0.8785 | 일반대화 F1: 0.9581 | 90.2분
+              precision    recall  f1-score   support
+
+       갈취 대화     0.8534    0.8359    0.8446       195
+   기타 괴롭힘 대화     0.8195    0.8400    0.8296       200
+ 직장 내 괴롭힘 대화     0.8810    0.9536    0.9158       194
+       협박 대화     0.8514    0.8371    0.8442       178
+       일반 대화     0.9946    0.9242    0.9581       198
+
+    accuracy                         0.8788       965
+   macro avg     0.8800    0.8782    0.8785       965
+weighted avg     0.8805    0.8788    0.8790       965
+
+  >> Test 일반대화: 81건 / 100건
+
+============================================================
+[M2-H2] Dropout 0.5
+============================================================
+Some weights of RobertaModel were not initialized from the model checkpoint at klue/roberta-base and are newly initialized: ['pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+  백본 동결: 하위 9층 + 임베딩
+  백본 파라미터: 110,618,112 (학습: 21,854,208 | 동결: 88,763,904)
+  전체: 110,817,797 | 학습: 22,053,893 (19.9%)
+  Epoch 1 | Train F1: 0.5105 | Val F1: 0.8147 | 1584s << BEST
+  Epoch 2 | Train F1: 0.8337 | Val F1: 0.8764 | 1579s << BEST
+  Epoch 3 | Train F1: 0.8675 | Val F1: 0.8786 | 1581s << BEST
+
+  >> Best: Epoch 3 | Val F1: 0.8786 | 일반대화 F1: 0.9554 | 79.1분
+              precision    recall  f1-score   support
+
+       갈취 대화     0.8542    0.8410    0.8475       195
+   기타 괴롭힘 대화     0.8235    0.8400    0.8317       200
+ 직장 내 괴롭힘 대화     0.8804    0.9485    0.9132       194
+       협박 대화     0.8475    0.8427    0.8451       178
+       일반 대화     0.9945    0.9192    0.9554       198
+
+    accuracy                         0.8788       965
+   macro avg     0.8800    0.8783    0.8786       965
+weighted avg     0.8807    0.8788    0.8791       965
+
+  >> Test 일반대화: 82건 / 100건
+
+============================================================
+[M2-H3] Head LR 3e-5
+============================================================
+Some weights of RobertaModel were not initialized from the model checkpoint at klue/roberta-base and are newly initialized: ['pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+  백본 동결: 하위 9층 + 임베딩
+  백본 파라미터: 110,618,112 (학습: 21,854,208 | 동결: 88,763,904)
+  전체: 110,817,797 | 학습: 22,053,893 (19.9%)
+  Epoch 1 | Train F1: 0.5944 | Val F1: 0.8541 | 1582s << BEST
+  Epoch 2 | Train F1: 0.8664 | Val F1: 0.8804 | 1625s << BEST
+  Epoch 3 | Train F1: 0.8896 | Val F1: 0.8826 | 1584s << BEST
+
+  >> Best: Epoch 3 | Val F1: 0.8826 | 일반대화 F1: 0.9635 | 79.9분
+              precision    recall  f1-score   support
+
+       갈취 대화     0.8670    0.8359    0.8512       195
+   기타 괴롭힘 대화     0.8155    0.8400    0.8276       200
+ 직장 내 괴롭힘 대화     0.8981    0.9536    0.9250       194
+       협박 대화     0.8436    0.8483    0.8459       178
+       일반 대화     0.9946    0.9343    0.9635       198
+
+    accuracy                         0.8829       965
+   macro avg     0.8838    0.8824    0.8826       965
+weighted avg     0.8844    0.8829    0.8832       965
+
+  >> Test 일반대화: 81건 / 100건
+
+============================================================
+[M3-B] Ending Pooling
+============================================================
+Some weights of RobertaModel were not initialized from the model checkpoint at klue/roberta-base and are newly initialized: ['pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+  백본 동결: 하위 9층 + 임베딩
+  백본 파라미터: 110,618,112 (학습: 21,854,208 | 동결: 88,763,904)
+  전체: 110,817,797 | 학습: 22,053,893 (19.9%)
+  Epoch 1 | Train F1: 0.5516 | Val F1: 0.8211 | 1687s << BEST
+  Epoch 2 | Train F1: 0.8533 | Val F1: 0.8747 | 1666s << BEST
+  Epoch 3 | Train F1: 0.8802 | Val F1: 0.8808 | 1581s << BEST
+
+  >> Best: Epoch 3 | Val F1: 0.8808 | 일반대화 F1: 0.9581 | 82.3분
+              precision    recall  f1-score   support
+
+       갈취 대화     0.8594    0.8462    0.8527       195
+   기타 괴롭힘 대화     0.8173    0.8500    0.8333       200
+ 직장 내 괴롭힘 대화     0.8878    0.9381    0.9123       194
+       협박 대화     0.8523    0.8427    0.8475       178
+       일반 대화     0.9946    0.9242    0.9581       198
+
+    accuracy                         0.8808       965
+   macro avg     0.8823    0.8802    0.8808       965
+weighted avg     0.8828    0.8808    0.8813       965
+
+  >> Test 일반대화: 78건 / 100건
+
+============================================================
+[M3-C] Speaker-aware
+============================================================
+Some weights of RobertaModel were not initialized from the model checkpoint at klue/roberta-base and are newly initialized: ['pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+  백본 동결: 하위 9층 + 임베딩
+  백본 파라미터: 110,618,112 (학습: 21,854,208 | 동결: 88,763,904)
+  전체: 111,015,941 | 학습: 22,252,037 (20.0%)
+  Epoch 1 | Train F1: 0.6133 | Val F1: 0.8596 | 1578s << BEST
+  Epoch 2 | Train F1: 0.8775 | Val F1: 0.8934 | 1626s << BEST
+  Epoch 3 | Train F1: 0.8968 | Val F1: 0.8947 | 1601s << BEST
+
+  >> Best: Epoch 3 | Val F1: 0.8947 | 일반대화 F1: 0.9637 | 80.1분
+              precision    recall  f1-score   support
+
+       갈취 대화     0.8789    0.8564    0.8675       195
+   기타 괴롭힘 대화     0.8550    0.8550    0.8550       200
+ 직장 내 괴롭힘 대화     0.9078    0.9639    0.9350       194
+       협박 대화     0.8453    0.8596    0.8524       178
+       일반 대화     0.9894    0.9394    0.9637       198
+
+    accuracy                         0.8953       965
+   macro avg     0.8953    0.8949    0.8947       965
+weighted avg     0.8962    0.8953    0.8954       965
+
+  >> Test 일반대화: 85건 / 100건
+
+============================================================
+[M3-D] Multi-head
+============================================================
+Some weights of RobertaModel were not initialized from the model checkpoint at klue/roberta-base and are newly initialized: ['pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+  백본 동결: 하위 9층 + 임베딩
+  백본 파라미터: 110,618,112 (학습: 21,854,208 | 동결: 88,763,904)
+  전체: 111,114,248 | 학습: 22,350,344 (20.1%)
+  Epoch 1 | Train F1: 0.5857 | Val F1: 0.8376 | 1619s << BEST
+  Epoch 2 | Train F1: 0.8606 | Val F1: 0.8826 | 1598s << BEST
+  Epoch 3 | Train F1: 0.8861 | Val F1: 0.8848 | 1559s << BEST
+
+  >> Best: Epoch 3 | Val F1: 0.8848 | 일반대화 F1: 0.9556 | 79.6분
+              precision    recall  f1-score   support
+
+       갈취 대화     0.8632    0.8410    0.8519       195
+   기타 괴롭힘 대화     0.8301    0.8550    0.8424       200
+ 직장 내 괴롭힘 대화     0.8976    0.9485    0.9223       194
+       협박 대화     0.8492    0.8539    0.8515       178
+       일반 대화     0.9892    0.9242    0.9556       198
+
+    accuracy                         0.8850       965
+   macro avg     0.8858    0.8845    0.8848       965
+weighted avg     0.8865    0.8850    0.8853       965
+
+  >> Test 일반대화: 84건 / 100건
+
+============================================================
+전체 완료! 결과:
+============================================================
+exp_id           desc  val_f1  normal_val_f1  test_normal  best_epoch  time_min
+  M3-C  Speaker-aware  0.8947         0.9637           85           3      80.1
+  M3-D     Multi-head  0.8848         0.9556           84           3      79.6
+ M2-H3   Head LR 3e-5  0.8826         0.9635           81           3      79.9
+  M3-B Ending Pooling  0.8808         0.9581           78           3      82.3
+ M2-H2    Dropout 0.5  0.8786         0.9554           82           3      79.1
+ M2-H1    Dropout 0.1  0.8785         0.9581           81           2      90.2

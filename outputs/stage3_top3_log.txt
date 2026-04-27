@@ -1,0 +1,101 @@
+Device: cpu
+Train: 15000 | Val: 965 | Test: 500
+
+============================================================
+Stage 3 Top 3 | Epoch 6 | 동결 9층 | BS=64
+============================================================
+
+============================================================
+[M3-B-e6] Ending Pooling (6ep)
+============================================================
+Some weights of RobertaModel were not initialized from the model checkpoint at klue/roberta-base and are newly initialized: ['pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+  전체: 110,817,797 | 학습: 22,053,893 (19.9%)
+  Epoch 1 | Train F1: 0.4885 | Val F1: 0.8116 | 4848s << BEST
+  Epoch 2 | Train F1: 0.8546 | Val F1: 0.8805 | 1604s << BEST
+  Epoch 3 | Train F1: 0.8942 | Val F1: 0.8878 | 1346s << BEST
+  Epoch 4 | Train F1: 0.9103 | Val F1: 0.8951 | 2772s << BEST
+  Epoch 5 | Train F1: 0.9155 | Val F1: 0.8983 | 1567s << BEST
+  Epoch 6 | Train F1: 0.9178 | Val F1: 0.8994 | 1609s << BEST
+
+  >> Best: Epoch 6 | Val F1: 0.8994 | 일반대화 F1: 0.9795 | 229.2분
+              precision    recall  f1-score   support
+
+       갈취 대화     0.8836    0.8564    0.8698       195
+   기타 괴롭힘 대화     0.8230    0.8600    0.8411       200
+ 직장 내 괴롭힘 대화     0.9289    0.9433    0.9361       194
+       협박 대화     0.8708    0.8708    0.8708       178
+       일반 대화     0.9948    0.9646    0.9795       198
+
+    accuracy                         0.8995       965
+   macro avg     0.9002    0.8990    0.8994       965
+weighted avg     0.9006    0.8995    0.8999       965
+
+  >> Test 일반대화: 84건 / 100건
+  >> Test 분포: {'갈취 대화': 107, '직장 내 괴롭힘 대화': 107, '협박 대화': 102, '기타 괴롭힘 대화': 100, '일반 대화': 84}
+
+============================================================
+[M3-C-e6] Speaker-aware (6ep)
+============================================================
+Some weights of RobertaModel were not initialized from the model checkpoint at klue/roberta-base and are newly initialized: ['pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+  전체: 111,015,941 | 학습: 22,252,037 (20.0%)
+  Epoch 1 | Train F1: 0.5504 | Val F1: 0.8544 | 1564s << BEST
+  Epoch 2 | Train F1: 0.8791 | Val F1: 0.8976 | 1507s << BEST
+  Epoch 3 | Train F1: 0.9082 | Val F1: 0.8992 | 1484s << BEST
+  Epoch 4 | Train F1: 0.9161 | Val F1: 0.9072 | 1543s << BEST
+  Epoch 5 | Train F1: 0.9262 | Val F1: 0.9113 | 1577s << BEST
+  Epoch 6 | Train F1: 0.9298 | Val F1: 0.9074 | 5310s
+
+  >> Best: Epoch 5 | Val F1: 0.9113 | 일반대화 F1: 0.9821 | 216.5분
+              precision    recall  f1-score   support
+
+       갈취 대화     0.9185    0.8667    0.8918       195
+   기타 괴롭힘 대화     0.8763    0.8500    0.8629       200
+ 직장 내 괴롭힘 대화     0.9216    0.9691    0.9447       194
+       협박 대화     0.8474    0.9045    0.8750       178
+       일반 대화     0.9948    0.9697    0.9821       198
+
+    accuracy                         0.9119       965
+   macro avg     0.9117    0.9120    0.9113       965
+weighted avg     0.9129    0.9119    0.9119       965
+
+  >> Test 일반대화: 85건 / 100건
+  >> Test 분포: {'직장 내 괴롭힘 대화': 110, '협박 대화': 107, '갈취 대화': 106, '기타 괴롭힘 대화': 92, '일반 대화': 85}
+
+============================================================
+[M3-D-e6] Multi-head (6ep)
+============================================================
+Some weights of RobertaModel were not initialized from the model checkpoint at klue/roberta-base and are newly initialized: ['pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+  전체: 111,114,248 | 학습: 22,350,344 (20.1%)
+  Epoch 1 | Train F1: 0.5198 | Val F1: 0.8264 | 1803s << BEST
+  Epoch 2 | Train F1: 0.8637 | Val F1: 0.8899 | 9747s << BEST
+  Epoch 3 | Train F1: 0.9005 | Val F1: 0.9043 | 1494s << BEST
+  Epoch 4 | Train F1: 0.9137 | Val F1: 0.9012 | 1404s
+  Epoch 5 | Train F1: 0.9173 | Val F1: 0.9104 | 1467s << BEST
+  Epoch 6 | Train F1: 0.9212 | Val F1: 0.9115 | 1500s << BEST
+
+  >> Best: Epoch 6 | Val F1: 0.9115 | 일반대화 F1: 0.9795 | 290.3분
+              precision    recall  f1-score   support
+
+       갈취 대화     0.9086    0.8667    0.8871       195
+   기타 괴롭힘 대화     0.8571    0.8700    0.8635       200
+ 직장 내 괴롭힘 대화     0.9261    0.9691    0.9471       194
+       협박 대화     0.8729    0.8876    0.8802       178
+       일반 대화     0.9948    0.9646    0.9795       198
+
+    accuracy                         0.9119       965
+   macro avg     0.9119    0.9116    0.9115       965
+weighted avg     0.9126    0.9119    0.9120       965
+
+  >> Test 일반대화: 88건 / 100건
+  >> Test 분포: {'직장 내 괴롭힘 대화': 110, '갈취 대화': 104, '협박 대화': 102, '기타 괴롭힘 대화': 96, '일반 대화': 88}
+
+============================================================
+Top 3 Epoch 6 완료!
+============================================================
+ exp_id                 desc  val_f1  normal_val_f1  test_normal  best_epoch  time_min
+M3-D-e6     Multi-head (6ep)  0.9115         0.9795           88           6     290.3
+M3-C-e6  Speaker-aware (6ep)  0.9113         0.9821           85           5     216.5
+M3-B-e6 Ending Pooling (6ep)  0.8994         0.9795           84           6     229.2

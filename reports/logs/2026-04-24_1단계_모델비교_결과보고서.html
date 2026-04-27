@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1단계 모델 백본 비교 결과</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e17;--card:#1a2332;--card2:#141e2d;--border:#2a3545;--text:#e2e8f0;--text2:#8892a4;--cyan:#06b6d4;--yellow:#f59e0b;--red:#ef4444;--blue:#3b82f6;--green:#10b981;--purple:#a78bfa}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.7;padding:20px}
+.container{max-width:840px;margin:0 auto}
+h1{color:var(--cyan);font-size:1.7em;margin-bottom:4px}
+h2{color:var(--cyan);font-size:1.25em;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+h3{color:var(--yellow);font-size:1em;margin:18px 0 10px}
+.subtitle{color:var(--text2);font-size:0.93em;margin-bottom:24px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin:14px 0}
+.card-inner{background:var(--card2);border-radius:8px;padding:14px;margin:10px 0}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:0.88em}
+th{background:var(--card2);color:var(--cyan);padding:10px 12px;text-align:left;font-weight:600}
+td{padding:9px 12px;border-bottom:1px solid var(--border)}
+.num{font-family:'JetBrains Mono',monospace;color:var(--yellow);font-weight:500}
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.78em;font-weight:600;margin-right:4px}
+.tag-green{background:rgba(16,185,129,0.15);color:var(--green)}
+.tag-blue{background:rgba(59,130,246,0.15);color:var(--blue)}
+.tag-red{background:rgba(239,68,68,0.15);color:var(--red)}
+.tag-yellow{background:rgba(245,158,11,0.15);color:var(--yellow)}
+.insight{border-left:3px solid var(--yellow);padding:12px 16px;margin:12px 0;background:rgba(245,158,11,0.05);border-radius:0 8px 8px 0}
+.insight.success{border-left-color:var(--green);background:rgba(16,185,129,0.05)}
+.medal{font-size:1.2em;margin-right:4px}
+.metric-row{display:flex;gap:12px;flex-wrap:wrap}
+.metric-box{flex:1;min-width:140px;background:var(--card2);border-radius:8px;padding:14px;text-align:center}
+.metric-box .label{color:var(--text2);font-size:0.8em;margin-bottom:4px}
+.metric-box .value{font-family:'JetBrains Mono',monospace;font-size:1.4em;font-weight:700}
+.footer{text-align:center;color:var(--text2);font-size:0.8em;margin-top:40px;padding-top:20px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>1단계: 모델 백본 비교 실험 결과</h1>
+<p class="subtitle">DKTC DLthon | 동일 조건에서 3종 모델의 맥락 이해 능력 비교 | 2026-04-24</p>
+
+<!-- 핵심 결론 -->
+<div class="card">
+  <div class="metric-row">
+    <div class="metric-box">
+      <div class="label">최적 모델</div>
+      <div class="value" style="font-size:1em;color:var(--cyan)">KLUE-RoBERTa-base</div>
+    </div>
+    <div class="metric-box">
+      <div class="label">Val F1 Macro</div>
+      <div class="value" style="color:var(--green)">0.9299</div>
+    </div>
+    <div class="metric-box">
+      <div class="label">Test 일반대화</div>
+      <div class="value" style="color:var(--yellow)">74건</div>
+    </div>
+  </div>
+</div>
+
+<!-- 실험 설계 -->
+<h2>1. 실험 설계</h2>
+<div class="card">
+  <h3>질문</h3>
+  <p>"동일한 데이터·동일한 설정에서, 어떤 사전학습 모델이 위협/일반 대화의 <strong>맥락 차이</strong>를 가장 잘 구분하는가?"</p>
+
+  <h3>고정 조건 (변수 1개만 변경: 모델)</h3>
+  <div class="card-inner">
+    <table style="margin:0">
+      <tr><td>데이터</td><td class="num">train_final.csv (15,000건, 5×3,000 균형)</td></tr>
+      <tr><td>풀링</td><td>Mean Pooling</td></tr>
+      <tr><td>분류 헤드</td><td>LayerNorm → FC(768→256) → GELU → Dropout(0.3) → FC(256→5)</td></tr>
+      <tr><td>학습률</td><td class="num">백본 4e-6 / 헤드 2e-5 (차등)</td></tr>
+      <tr><td>MAX_LEN</td><td class="num">256</td></tr>
+      <tr><td>BATCH_SIZE</td><td class="num">32</td></tr>
+      <tr><td>EPOCHS</td><td class="num">3</td></tr>
+      <tr><td>시드</td><td class="num">42 (모델마다 재고정)</td></tr>
+    </table>
+  </div>
+
+  <h3>비교 모델 3종</h3>
+  <table>
+    <tr><th>실험</th><th>모델</th><th>사전학습 방식</th><th>강점</th></tr>
+    <tr><td class="num">M1-A</td><td>klue/roberta-base</td><td>MLM + Dynamic Masking</td><td>문맥 파악, 문장 간 관계</td></tr>
+    <tr><td class="num">M1-B</td><td>beomi/KcELECTRA-base</td><td>RTD (단어 판별)</td><td>구어체/댓글 특화</td></tr>
+    <tr><td class="num">M1-C</td><td>snunlp/KR-ELECTRA</td><td>RTD (단어 판별)</td><td>다양한 한국어 웹 코퍼스</td></tr>
+  </table>
+</div>
+
+<!-- 결과 -->
+<h2>2. 실험 결과</h2>
+<div class="card">
+  <table>
+    <tr>
+      <th></th><th>모델</th><th>Val F1</th><th>일반대화 Val F1</th><th>Test 일반대화</th><th>Best Epoch</th><th>학습시간</th>
+    </tr>
+    <tr style="background:rgba(16,185,129,0.08)">
+      <td><span class="medal">🥇</span></td>
+      <td><strong>KLUE-RoBERTa-base</strong></td>
+      <td class="num" style="color:var(--green);font-weight:700">0.9299</td>
+      <td class="num">0.9949</td>
+      <td class="num" style="color:var(--green);font-weight:700">74건</td>
+      <td class="num">3</td>
+      <td class="num">35.1분</td>
+    </tr>
+    <tr>
+      <td><span class="medal">🥈</span></td>
+      <td>KR-ELECTRA</td>
+      <td class="num">0.9121</td>
+      <td class="num">1.0000</td>
+      <td class="num">67건</td>
+      <td class="num">3</td>
+      <td class="num">35.0분</td>
+    </tr>
+    <tr>
+      <td><span class="medal">🥉</span></td>
+      <td>KcELECTRA-base</td>
+      <td class="num">0.8916</td>
+      <td class="num">0.9899</td>
+      <td class="num">56건</td>
+      <td class="num">3</td>
+      <td class="num">34.8분</td>
+    </tr>
+  </table>
+</div>
+
+<!-- 클래스별 상세 -->
+<h2>3. 클래스별 F1 비교</h2>
+<div class="card">
+  <table>
+    <tr><th>클래스</th><th>RoBERTa (1위)</th><th>KR-ELECTRA (2위)</th><th>KcELECTRA (3위)</th></tr>
+    <tr><td>갈취 대화</td><td class="num" style="color:var(--green)">0.917</td><td class="num">0.885</td><td class="num">0.846</td></tr>
+    <tr><td>기타 괴롭힘 대화</td><td class="num" style="color:var(--green)">0.892</td><td class="num">0.856</td><td class="num">0.815</td></tr>
+    <tr><td>직장 내 괴롭힘 대화</td><td class="num">0.949</td><td class="num" style="color:var(--green)">0.952</td><td class="num">0.942</td></tr>
+    <tr><td>협박 대화</td><td class="num" style="color:var(--green)">0.897</td><td class="num">0.867</td><td class="num">0.866</td></tr>
+    <tr><td>일반 대화</td><td class="num">0.995</td><td class="num" style="color:var(--green)">1.000</td><td class="num">0.990</td></tr>
+    <tr style="background:rgba(6,182,212,0.06)">
+      <td style="font-weight:600">Macro Avg</td>
+      <td class="num" style="font-weight:700;color:var(--green)">0.930</td>
+      <td class="num">0.912</td>
+      <td class="num">0.892</td>
+    </tr>
+  </table>
+
+  <div class="insight success">
+    <strong>핵심 차이가 나는 곳:</strong> 갈취(+7.1%p)와 기타 괴롭힘(+7.7%p) — 가장 혼동되는 클래스 쌍에서 RoBERTa가 압도적 우위.
+  </div>
+</div>
+
+<!-- 분석 -->
+<h2>4. 왜 RoBERTa가 1위인가</h2>
+<div class="card">
+  <h3>사전학습 방식의 차이</h3>
+  <div class="card-inner">
+    <table style="margin:0">
+      <tr><th></th><th>RoBERTa (MLM)</th><th>ELECTRA (RTD)</th></tr>
+      <tr><td>학습 방식</td><td>"마스킹된 단어가 뭘까?" 예측</td><td>"이 단어가 진짜인가 가짜인가?" 판별</td></tr>
+      <tr><td>학습 단위</td><td><strong>문맥 전체</strong>를 보고 예측</td><td><strong>개별 단어</strong>의 진위를 판단</td></tr>
+      <tr><td>우리 과제에서</td><td>"죽겠다"가 비유인지 위협인지 <strong>문맥으로</strong> 판단</td><td>"죽겠다"라는 <strong>단어 자체</strong>에 반응</td></tr>
+    </table>
+  </div>
+
+  <div class="insight">
+    <strong>DKTC 과제의 핵심은 "같은 단어, 다른 맥락"을 구분하는 것.</strong><br>
+    예) "야 죽을래" (형제 장난 = 일반) vs "죽여버릴거야" (실제 위협 = 협박)<br>
+    예) "돈 좀 빌려줘" (친구 사이 = 일반) vs "돈 안 내면 죽인다" (갈취)<br><br>
+    RoBERTa의 MLM은 문맥 전체를 예측에 사용하므로 이런 미묘한 차이를 더 잘 감지.
+  </div>
+</div>
+
+<!-- Test 예측 분포 -->
+<h2>5. Test 예측 분포 비교</h2>
+<div class="card">
+  <table>
+    <tr><th>클래스 (정답 각 100건)</th><th>RoBERTa</th><th>KR-ELECTRA</th><th>KcELECTRA</th></tr>
+    <tr><td>협박 대화</td><td class="num">105</td><td class="num">103</td><td class="num">106</td></tr>
+    <tr><td>갈취 대화</td><td class="num">102</td><td class="num">96</td><td class="num">100</td></tr>
+    <tr><td>직장 내 괴롭힘 대화</td><td class="num">113</td><td class="num">108</td><td class="num">117</td></tr>
+    <tr><td>기타 괴롭힘 대화</td><td class="num">106</td><td class="num">126</td><td class="num">121</td></tr>
+    <tr style="background:rgba(245,158,11,0.08)"><td style="font-weight:600">일반 대화</td><td class="num" style="color:var(--green);font-weight:700">74</td><td class="num">67</td><td class="num" style="color:var(--red)">56</td></tr>
+  </table>
+
+  <div class="insight">
+    <strong>일반 대화 탐지율:</strong> RoBERTa 74건 > KR-ELECTRA 67건 > KcELECTRA 56건<br>
+    RoBERTa의 갈취(102건)는 정답(100건)에 가장 가까움. 전체적으로 가장 균등한 분포.
+  </div>
+</div>
+
+<!-- 이전 실험 대비 -->
+<h2>6. 프로젝트 전체 진행 경과</h2>
+<div class="card">
+  <table>
+    <tr><th>실험</th><th>모델</th><th>데이터</th><th>Val F1</th><th>Test 일반대화</th></tr>
+    <tr><td class="num">B01</td><td>KcELECTRA</td><td>합성 694건</td><td class="num">0.922</td><td class="num" style="color:var(--red)">34건</td></tr>
+    <tr><td class="num">S02</td><td>KcELECTRA</td><td>합성 1,200건</td><td class="num">0.921</td><td class="num">38건</td></tr>
+    <tr><td class="num">B02</td><td>KcELECTRA</td><td>15k 균형 (v1)</td><td class="num">0.990</td><td class="num" style="color:var(--red)">23건</td></tr>
+    <tr><td class="num">B04</td><td>RoBERTa</td><td>15k 균형 (v2)</td><td class="num">0.923</td><td class="num">84건</td></tr>
+    <tr style="background:rgba(16,185,129,0.08)"><td class="num">M1-A</td><td><strong>RoBERTa</strong></td><td>15k (팀리더 데이터)</td><td class="num" style="color:var(--green)">0.930</td><td class="num" style="color:var(--green)">74건</td></tr>
+  </table>
+
+  <div class="insight success">
+    <strong>데이터 품질(v2 전략) + 모델 선택(RoBERTa)</strong>의 조합이 핵심. B02에서 Val 0.99인데 Test 23건이었던 문제가 해결됨.
+  </div>
+</div>
+
+<!-- 다음 단계 -->
+<h2>7. 다음 단계: 2단계 Ablation Test</h2>
+<div class="card">
+  <p>RoBERTa 고정 후, <strong>"B04가 잘 된 이유가 뭐야?"</strong>를 검증:</p>
+  <table>
+    <tr><th>실험</th><th>질문</th><th>빼는 것</th></tr>
+    <tr><td class="num">M2-A</td><td>차등 학습률이 진짜 필요해?</td><td>차등 → 단일 LR</td></tr>
+    <tr><td class="num">M2-C</td><td>백본 LR을 더 낮추면?</td><td>4e-6 → 2e-6</td></tr>
+    <tr><td class="num">M2-E</td><td>Label Smoothing 효과 있어?</td><td>LS 0.0 → 0.1</td></tr>
+    <tr><td class="num">M2-G</td><td>Mean Pooling이 [CLS]보다 나아?</td><td>Mean → [CLS]</td></tr>
+  </table>
+  <p style="color:var(--text2);font-size:0.9em;margin-top:10px">현재 Colab에서 실행 중. 약 2.3시간 후 결과 예상.</p>
+</div>
+
+<div class="footer">
+  <p>DKTC DLthon | 1단계 모델 비교 실험 보고서 | 2026-04-24</p>
+  <p style="margin-top:4px">실험 환경: Google Colab T4 GPU | 3종 × 3 epochs</p>
+</div>
+
+</div>
+</body>
+</html>

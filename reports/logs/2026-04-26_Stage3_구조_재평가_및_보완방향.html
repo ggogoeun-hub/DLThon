@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stage 3 모델 구조 재평가 — 설계 의도 vs 실제 구현 분석</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e17; --card: #1a2332; --card2: #141e2d; --border: #2a3545;
+  --text: #e2e8f0; --text2: #8892a4; --cyan: #06b6d4; --yellow: #f59e0b;
+  --red: #ef4444; --blue: #3b82f6; --green: #10b981;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.7; padding: 40px 20px; }
+.container { max-width: 920px; margin: 0 auto; }
+h1 { color: var(--cyan); font-size: 1.6rem; font-weight: 700; margin-bottom: 6px; }
+.subtitle { color: var(--text2); font-size: 0.9rem; margin-bottom: 32px; }
+h2 { color: var(--cyan); font-size: 1.15rem; font-weight: 600; margin: 32px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+h3 { color: var(--yellow); font-size: 1rem; font-weight: 600; margin: 20px 0 10px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 14px 0; }
+.card-inner { background: var(--card2); border-radius: 8px; padding: 16px; margin: 12px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.85rem; }
+th { background: var(--card2); color: var(--cyan); font-weight: 600; padding: 10px 12px; text-align: left; border-bottom: 2px solid var(--border); }
+td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.mono { font-family: 'JetBrains Mono', monospace; }
+pre { background: var(--card2); padding: 16px; border-radius: 8px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; line-height: 1.6; margin: 10px 0; }
+.tag { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+.tag-red { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+.tag-green { background: rgba(16,185,129,0.12); color: var(--green); border: 1px solid rgba(16,185,129,0.25); }
+.tag-yellow { background: rgba(245,158,11,0.12); color: var(--yellow); border: 1px solid rgba(245,158,11,0.25); }
+.insight { background: rgba(6,182,212,0.08); border-left: 3px solid var(--cyan); padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 0.9rem; }
+.warn { background: rgba(239,68,68,0.08); border-left: 3px solid var(--red); padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 0.9rem; }
+.vs { display: flex; gap: 16px; margin: 14px 0; flex-wrap: wrap; }
+.vs-box { flex: 1; min-width: 280px; background: var(--card2); border-radius: 8px; padding: 16px; border: 1px solid var(--border); }
+.vs-box h4 { font-size: 0.9rem; margin-bottom: 8px; }
+.footer { text-align: center; color: var(--text2); font-size: 0.8rem; margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border); }
+.flow-arrow { color: var(--cyan); text-align: center; font-size: 1.5rem; margin: 8px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Stage 3 모델 구조 재평가</h1>
+<p class="subtitle">설계 의도 vs 실제 구현 분석 + 보완 방향 | 2026-04-26</p>
+
+<!-- ========== 1. 요약 ========== -->
+<h2>1. 핵심 요약</h2>
+<div class="card">
+  <p>Stage 3에서 비교한 3가지 풀링 구조 중 <strong>2개가 설계 의도대로 작동하지 않았음</strong>을 코드 레벨에서 확인.</p>
+  <table>
+    <tr><th>모델</th><th>설계 의도</th><th>실제 작동</th><th>판정</th></tr>
+    <tr>
+      <td><strong>Multi-head</strong></td>
+      <td>대등성/마무리/위협을 각각 다른 관점에서 분석</td>
+      <td>같은 벡터에서 스칼라 3개 출력</td>
+      <td><span class="tag tag-red">불일치</span></td>
+    </tr>
+    <tr>
+      <td><strong>Speaker-aware</strong></td>
+      <td>화자 A/B를 구분하여 권력 비대칭 감지</td>
+      <td>토큰 포지션 짝수/홀수 분리</td>
+      <td><span class="tag tag-red">불일치</span></td>
+    </tr>
+    <tr>
+      <td><strong>Ending Pooling</strong></td>
+      <td>대화 마무리 톤 중점 분석</td>
+      <td>마지막 64토큰만 풀링</td>
+      <td><span class="tag tag-green">일치</span></td>
+    </tr>
+  </table>
+</div>
+
+<!-- ========== 2. Multi-head ========== -->
+<h2>2. Multi-head 분류기 — 무엇이 잘못되었나</h2>
+<div class="card">
+  <h3>설계 의도</h3>
+  <p>"대등성", "마무리 톤", "위협 의도"를 <strong>별도 헤드</strong>로 각각 예측한 후, 이 신호들을 결합하여 최종 분류</p>
+
+  <h3>실제 코드</h3>
+  <pre>def forward(self, input_ids, attention_mask):
+    out = self.backbone(input_ids, attention_mask)
+    pooled = self.mean_pooling(out.last_hidden_state, attention_mask)  # 768d
+
+    eq     = self.equality_head(pooled)   # 같은 pooled → 스칼라 1개
+    end    = self.ending_head(pooled)     # 같은 pooled → 스칼라 1개
+    threat = self.threat_head(pooled)     # 같은 pooled → 스칼라 1개
+
+    return self.final_classifier(concat([pooled, eq, end, threat]))
+    # 768 + 1 + 1 + 1 = 771차원 → 분류</pre>
+
+  <h3>문제 분석</h3>
+  <div class="vs">
+    <div class="vs-box" style="border-color: var(--red);">
+      <h4 style="color: var(--red);">문제 1: 같은 입력</h4>
+      <p>3개 헤드가 <strong>동일한 mean pooled 벡터</strong>를 입력으로 받음. "대등성", "마무리", "위협"을 각각 다른 관점에서 보는 것이 아니라, 같은 정보에서 서로 다른 스칼라만 뽑아냄.</p>
+    </div>
+    <div class="vs-box" style="border-color: var(--red);">
+      <h4 style="color: var(--red);">문제 2: Mean Pool의 한계</h4>
+      <p>Mean Pooling은 전체 토큰을 하나로 평균. <strong>"마무리 톤"을 보려면 마지막 부분만, "대등성"을 보려면 전반/후반을 비교</strong>해야 하는데, 전부 같은 평균 벡터를 봄.</p>
+    </div>
+  </div>
+
+  <div class="warn">
+    <strong>결과:</strong> 3개 헤드는 사실상 <code>nn.Linear(768, 1)</code> 3개 — 771차원 분류기에 3차원을 추가한 것과 같음. "서로 다른 관점"이 아니라 단순한 차원 확장 효과만 있었음.
+  </div>
+
+  <h3>보완: 각 헤드가 다른 영역을 봐야 함</h3>
+  <div class="card-inner">
+    <pre>// 올바른 설계
+equality_head:
+  first_half  = mean_pool(hidden[1 : L//2])        // 전반부
+  second_half = mean_pool(hidden[L//2 : L-1])      // 후반부
+  → 두 벡터 비교 (concat + diff)                     // 흐름 변화 감지
+
+ending_head:
+  ending = mean_pool(hidden[L-64 : L])              // 마지막 64토큰만
+  → 마무리 톤 분석                                    // 이미 Ending Pooling에 있음
+
+threat_head:
+  전체 mean_pool → 위협 키워드 존재 여부 스칼라        // 현재와 동일 (OK)</pre>
+  </div>
+
+  <div class="insight">
+    핵심: 각 헤드가 <strong>시퀀스의 다른 부분</strong>을 입력으로 받아야 의미 있는 멀티 관점 분석이 가능. 현재 구조는 같은 입력에 다른 가중치만 적용한 것.
+  </div>
+</div>
+
+<!-- ========== 3. Speaker-aware ========== -->
+<h2>3. Speaker-aware 구조 — 무엇이 잘못되었나</h2>
+<div class="card">
+  <h3>설계 의도</h3>
+  <p>화자 A와 화자 B의 발화를 분리 풀링하여 <strong>권력 비대칭</strong>(한쪽이 일방적으로 위협/굴복하는지)을 감지</p>
+
+  <h3>실제 코드</h3>
+  <pre>pos = torch.arange(S)                              // 0, 1, 2, 3, 4, 5, ...
+om = ((pos % 2 == 0) & (attention_mask == 1))       // 짝수 포지션 → "화자A"
+em = ((pos % 2 == 1) & (attention_mask == 1))       // 홀수 포지션 → "화자B"
+
+a = mean_pool(hidden * om)                          // 짝수 토큰 평균
+b = mean_pool(hidden * em)                          // 홀수 토큰 평균
+pooled = concat([a, b])                             // 768*2 = 1536차원</pre>
+
+  <h3>문제 분석</h3>
+  <div class="card-inner">
+    <p>실제 토큰 배치를 보면:</p>
+    <pre>"야   빨리  타라  늦으면  다   죽어  내가  운전할"
+ pos0  pos1  pos2  pos3  pos4  pos5  pos6  pos7
+  A     B     A     B     A     B     A     B</pre>
+    <p><strong>토큰 하나하나를 번갈아 A/B로 배정.</strong> 이건 화자 교대가 아님:</p>
+    <ul style="margin-top: 8px; padding-left: 20px; color: var(--text2); font-size: 0.88rem;">
+      <li>"야 빨리 타라 늦으면 다 죽어"가 한 사람의 말이면, 이 6개 토큰이 전부 같은 화자인데 A/B로 분산됨</li>
+      <li>턴 경계 정보가 없으므로 어디서 화자가 바뀌는지 알 수 없음</li>
+      <li>결과적으로 "짝수 토큰 평균 vs 홀수 토큰 평균" = 의미 없는 분할</li>
+    </ul>
+  </div>
+
+  <div class="warn">
+    <strong>결과:</strong> "화자 구분"이 아니라 "토큰 서브샘플링" 2가지 버전의 평균을 구한 것. 권력 비대칭 감지와 무관. 그런데도 성능이 나온 건 2가지 풀링을 concat한 것이 일종의 앙상블 효과를 준 것으로 추정.
+  </div>
+
+  <h3>근본적 한계: 턴 경계 데이터가 없음</h3>
+  <div class="card-inner">
+    <table>
+      <tr><th>데이터</th><th>턴 구분</th><th>진짜 Speaker-aware 가능 여부</th></tr>
+      <tr><td>Train 위협 (원본)</td><td><code>\n</code> 100%</td><td><span class="tag tag-green">가능</span> — \n 기준으로 화자 분리</td></tr>
+      <tr><td>Train 일반 (합성)</td><td>없음 0%</td><td><span class="tag tag-red">불가능</span></td></tr>
+      <tr><td>Test</td><td><code>\n</code> 5%, 구두점 81%</td><td><span class="tag tag-red">거의 불가능</span></td></tr>
+    </table>
+    <p style="margin-top:10px; color: var(--text2); font-size: 0.88rem;">Train에서 화자를 구분해 학습하더라도 Test에서는 턴 경계가 없어 추론 시 활용 불가. <strong>Train-Test 형식 불일치</strong>가 근본 문제.</p>
+  </div>
+</div>
+
+<!-- ========== 4. 왜 그래도 성능이 나왔나 ========== -->
+<h2>4. 그럼에도 성능이 나온 이유</h2>
+<div class="card">
+  <table>
+    <tr><th>모델</th><th>6ep Test 일반</th><th>실제 작동 원리 (추정)</th></tr>
+    <tr>
+      <td>M3-D Multi-head</td>
+      <td class="mono">88건</td>
+      <td>768→771차원 확장 효과 + 구두점 숏컷</td>
+    </tr>
+    <tr>
+      <td>M3-C Speaker-aware</td>
+      <td class="mono">85건</td>
+      <td>2가지 서브샘플링 앙상블 효과 + 구두점 숏컷</td>
+    </tr>
+    <tr>
+      <td>M3-B Ending Pooling</td>
+      <td class="mono">84건</td>
+      <td>마지막 64토큰 집중 (유일하게 의도대로) + 구두점 숏컷</td>
+    </tr>
+  </table>
+
+  <div class="insight">
+    88건 vs 85건 vs 84건의 차이는 <strong>구조적 우위가 아닌 학습 노이즈 수준</strong>일 가능성이 높음. 3모델 모두 구두점 숏컷(마침표 0개 → 일반대화)에 주로 의존했으며, 구조 차이보다 숏컷의 영향이 압도적이었음.
+  </div>
+</div>
+
+<!-- ========== 5. 보완 방향 ========== -->
+<h2>5. 보완 방향 — 청크 흐름 구조</h2>
+<div class="card">
+  <h3>Test 데이터의 현실</h3>
+  <div class="card-inner">
+    <table>
+      <tr><th>Test 어절 경계 수단</th><th>비율</th></tr>
+      <tr><td>구두점 뒤 공백 (마침표/물음표)</td><td>13.4%</td></tr>
+      <tr><td><strong>순수 공백만 (턴 경계 단서 없음)</strong></td><td><strong>86.6%</strong></td></tr>
+    </table>
+    <p style="margin-top:10px;">Test의 86.6%가 턴 구분 없는 연속 텍스트 → <strong>턴 구분 없이도 작동하는 구조</strong>가 필요</p>
+  </div>
+
+  <h3>청크 흐름 구조 (현재 실험 진행 중)</h3>
+  <div class="card-inner">
+    <pre>RoBERTa backbone
+    ↓
+토큰 시퀀스 (1 ~ L)
+    ↓
+┌──────────────────┐  ┌──────────────────┐
+│  전반부 풀링      │  │  후반부 풀링      │
+│  (1 ~ L/2)       │  │  (L/2 ~ L-1)     │
+│  → first (768d)  │  │  → second (768d) │
+└──────────────────┘  └──────────────────┘
+          ↓                    ↓
+      diff = second - first (768d)
+          ↓
+  concat [first, second, diff] → 2304d
+          ↓
+      512 → 128 → 5클래스</pre>
+  </div>
+
+  <h3>왜 청크 흐름이 적합한가</h3>
+  <div class="card-inner">
+    <p><strong>같은 키워드, 다른 흐름:</strong></p>
+    <pre>일반: "새끼야 살이나빼"(전반)  → "팩트라 할말없네"(후반)     = 수긍 ✓
+위협: "새끼야 살이나빼"(전반)  → "죄송합니다 그만해주세요"(후반) = 굴복 ✗</pre>
+    <p style="margin-top:10px;">전반부 벡터와 후반부 벡터의 <strong>차이(diff)</strong>가 수긍/협력 vs 굴복/강압의 방향을 나타냄.</p>
+  </div>
+
+  <h3>기존 대비 개선점</h3>
+  <table>
+    <tr><th></th><th>기존 Multi-head</th><th>청크 흐름</th></tr>
+    <tr><td>입력</td><td>같은 mean pool 벡터 1개</td><td><strong>전반/후반 + diff 3개</strong></td></tr>
+    <tr><td>관점</td><td>차원 추가 효과만</td><td><strong>시간적 흐름 비교</strong></td></tr>
+    <tr><td>턴 구분 필요</td><td>불필요 (어차피 안 씀)</td><td><strong>불필요 (토큰 절반 분할)</strong></td></tr>
+    <tr><td>Train-Test 일관성</td><td>일관 (둘 다 턴 없음)</td><td><strong>일관 (둘 다 절반 분할)</strong></td></tr>
+  </table>
+
+  <div class="insight">
+    청크 흐름은 <strong>턴 구분이 없어도 작동</strong>하면서, 대화의 시간적 변화(전반→후반)를 명시적으로 모델링. 현재 구두점 제거 + 청크 흐름 실험이 진행 중이며, 기존 구두점 제거 + Mean Pool(75건) 대비 개선 여부를 확인 예정.
+  </div>
+</div>
+
+<!-- ========== 6. 교훈 ========== -->
+<h2>6. 교훈</h2>
+<div class="card">
+  <div class="card-inner">
+    <p><strong style="color:var(--cyan);">1. 구조의 이름이 아니라 코드를 봐야 한다</strong><br>
+    "Speaker-aware"라는 이름이 화자 분리를 의미하지 않음. 실제 코드가 <code>pos % 2</code>로 토큰을 나누고 있으면, 그건 화자 분리가 아니라 서브샘플링.</p>
+  </div>
+  <div class="card-inner">
+    <p><strong style="color:var(--cyan);">2. 같은 입력에서 다른 출력은 "다른 관점"이 아니다</strong><br>
+    진정한 멀티 관점은 <strong>다른 영역을 보는 것</strong>. 같은 mean pool에 다른 Linear를 적용하는 건 관점이 아니라 차원 확장.</p>
+  </div>
+  <div class="card-inner">
+    <p><strong style="color:var(--cyan);">3. Train-Test 형식 일관성이 전제 조건</strong><br>
+    Train에서만 가능한 피처(턴 구분, 화자 구분)를 학습해도 Test에서 활용 불가. 설계 시 Test 조건을 먼저 확인해야 함.</p>
+  </div>
+</div>
+
+<div class="footer">
+  Stage 3 구조 재평가 보고서 | Generated by Claude Code | 2026-04-26
+</div>
+
+</div>
+</body>
+</html>

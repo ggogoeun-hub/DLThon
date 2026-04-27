@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DKTC DLthon 종합 실험 결과 리포트</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e17;--card:#1a2332;--card2:#141e2d;--border:#2a3545;--text:#e2e8f0;--text2:#8892a4;--cyan:#06b6d4;--yellow:#f59e0b;--red:#ef4444;--blue:#3b82f6;--green:#10b981;--purple:#a78bfa}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.8;padding:20px}
+.container{max-width:860px;margin:0 auto}
+h1{color:var(--cyan);font-size:1.7em;margin-bottom:4px}
+h2{color:var(--cyan);font-size:1.25em;margin:36px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+h3{color:var(--yellow);font-size:1em;margin:20px 0 10px}
+.subtitle{color:var(--text2);font-size:0.93em;margin-bottom:28px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin:14px 0}
+.card-inner{background:var(--card2);border-radius:8px;padding:14px;margin:10px 0}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:0.88em}
+th{background:var(--card2);color:var(--cyan);padding:10px 12px;text-align:left;font-weight:600}
+td{padding:9px 12px;border-bottom:1px solid var(--border)}
+.num{font-family:'JetBrains Mono',monospace;color:var(--yellow);font-weight:500}
+.insight{border-left:3px solid var(--yellow);padding:12px 16px;margin:14px 0;background:rgba(245,158,11,0.05);border-radius:0 8px 8px 0}
+.insight.success{border-left-color:var(--green);background:rgba(16,185,129,0.05)}
+.insight.danger{border-left-color:var(--red);background:rgba(239,68,68,0.05)}
+.metric-row{display:flex;gap:12px;flex-wrap:wrap}
+.metric-box{flex:1;min-width:130px;background:var(--card2);border-radius:8px;padding:14px;text-align:center}
+.metric-box .label{color:var(--text2);font-size:0.8em;margin-bottom:4px}
+.metric-box .value{font-family:'JetBrains Mono',monospace;font-size:1.4em;font-weight:700}
+.quote{background:rgba(6,182,212,0.06);border:1px solid rgba(6,182,212,0.15);border-radius:8px;padding:16px;margin:14px 0;font-size:1.02em;text-align:center;font-weight:500;color:var(--cyan)}
+.footer{text-align:center;color:var(--text2);font-size:0.8em;margin-top:40px;padding-top:20px;border-top:1px solid var(--border)}
+.stage-tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.78em;font-weight:600;margin-right:6px}
+.s1{background:rgba(59,130,246,0.15);color:var(--blue)}
+.s2{background:rgba(16,185,129,0.15);color:var(--green)}
+.s3{background:rgba(167,139,250,0.15);color:var(--purple)}
+.best-row td{background:rgba(16,185,129,0.06)}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>DKTC DLthon 종합 실험 결과 리포트</h1>
+<p class="subtitle">3단계 Ablation Study 완료 | 15회 실험 종합 | 2026-04-25</p>
+
+<!-- 최종 성과 -->
+<div class="card">
+  <div class="metric-row">
+    <div class="metric-box">
+      <div class="label">총 실험 횟수</div>
+      <div class="value" style="color:var(--cyan)">15+</div>
+    </div>
+    <div class="metric-box">
+      <div class="label">Best 모델</div>
+      <div class="value" style="font-size:0.9em;color:var(--green)">RoBERTa<br>Speaker-aware</div>
+    </div>
+    <div class="metric-box">
+      <div class="label">Best Val F1</div>
+      <div class="value" style="color:var(--green)">0.8947</div>
+    </div>
+    <div class="metric-box">
+      <div class="label">Best Test 일반대화</div>
+      <div class="value" style="color:var(--yellow)">85건</div>
+    </div>
+  </div>
+  <p style="color:var(--text2);font-size:0.85em;text-align:center;margin-top:8px">* Stage 3 결과는 9층 동결 조건. Epoch 6회 재실행 + 동결 해제 Final Run 예정</p>
+</div>
+
+<!-- 3단계 실험 설계 -->
+<h2>실험 설계: 3단계 체계적 비교</h2>
+<div class="card">
+  <table>
+    <tr><th>단계</th><th>질문</th><th>변수</th><th>고정 조건</th></tr>
+    <tr>
+      <td><span class="stage-tag s1">Stage 1</span></td>
+      <td>"어떤 모델이 맥락을 잘 읽는가?"</td>
+      <td>백본 모델 3종</td>
+      <td>Mean Pooling, 차등 LR, MAX_LEN=256</td>
+    </tr>
+    <tr>
+      <td><span class="stage-tag s2">Stage 2</span></td>
+      <td>"어떤 학습 전략이 최적인가?"</td>
+      <td>LR, LS, Pooling</td>
+      <td>RoBERTa 고정</td>
+    </tr>
+    <tr>
+      <td><span class="stage-tag s3">Stage 3</span></td>
+      <td>"구조 개선으로 추가 향상 가능한가?"</td>
+      <td>Dropout, HeadLR, 인코딩 구조</td>
+      <td>RoBERTa + 최적 LR/LS</td>
+    </tr>
+  </table>
+  <div class="insight">
+    <strong>원칙:</strong> "한 번에 변수 하나만 변경" → 효과 귀인 명확화. 각 단계에서 확정된 설정을 다음 단계로 이월.
+  </div>
+</div>
+
+<!-- Stage 1 -->
+<h2><span class="stage-tag s1">Stage 1</span> 모델 백본 비교</h2>
+<div class="card">
+  <table>
+    <tr><th></th><th>모델</th><th>사전학습</th><th>Val F1</th><th>Test 일반대화</th></tr>
+    <tr class="best-row"><td>🥇</td><td><strong>KLUE-RoBERTa-base</strong></td><td>MLM (문맥 예측)</td><td class="num">0.9299</td><td class="num">74건</td></tr>
+    <tr><td>🥈</td><td>KR-ELECTRA</td><td>RTD (단어 판별)</td><td class="num">0.9121</td><td class="num">67건</td></tr>
+    <tr><td>🥉</td><td>KcELECTRA-base</td><td>RTD (단어 판별)</td><td class="num">0.8916</td><td class="num">56건</td></tr>
+  </table>
+  <div class="insight success">
+    <strong>결론:</strong> RoBERTa의 MLM이 "같은 단어, 다른 맥락"(예: "죽겠다"=비유 vs "죽여"=위협) 구분에 ELECTRA RTD 대비 우수. 혼동 쌍(갈취↔기타괴롭힘)에서 가장 큰 격차(+7.7%p).
+  </div>
+</div>
+
+<!-- Stage 2 -->
+<h2><span class="stage-tag s2">Stage 2</span> 학습 전략 Ablation</h2>
+<div class="card">
+  <h3>차등 학습률: "경력자는 건드리지 않을수록 좋다"</h3>
+  <table>
+    <tr><th>실험</th><th>차등 비율</th><th>백본 LR</th><th>Val F1</th><th>Test 일반대화</th></tr>
+    <tr><td class="num">M2-A</td><td class="num">1배 (차등 없음)</td><td class="num">2e-5</td><td class="num">0.9299</td><td class="num" style="color:var(--red)">69건</td></tr>
+    <tr><td class="num">M2-B</td><td class="num">5배</td><td class="num">4e-6</td><td class="num">0.9299</td><td class="num">74건</td></tr>
+    <tr class="best-row"><td class="num">M2-C</td><td class="num" style="color:var(--green)"><strong>10배</strong></td><td class="num">2e-6</td><td class="num">0.9214</td><td class="num" style="color:var(--green)"><strong>77건</strong></td></tr>
+  </table>
+  <div class="insight success">
+    <strong>핵심 발견:</strong> 차등 비율이 클수록 Test 일반대화 탐지율 상승 (69→74→77건). 모델의 사전학습된 맥락 파악 능력은 <strong>"건드리지 않을수록 좋다."</strong>
+  </div>
+
+  <h3>Label Smoothing & Pooling</h3>
+  <table>
+    <tr><th>비교</th><th>A 조건</th><th>B 조건</th><th>결론</th></tr>
+    <tr>
+      <td>Label Smoothing</td>
+      <td>LS=0.0 → Val 0.930, Test 74건</td>
+      <td><strong>LS=0.1 → Val 0.934, Test 77건</strong></td>
+      <td style="color:var(--green)">✅ 0.1 채택. 과신 방지 효과</td>
+    </tr>
+    <tr>
+      <td>Pooling</td>
+      <td><strong>Mean → Val 0.930, Test 74건</strong></td>
+      <td>[CLS] → Val 0.925, Test 73건</td>
+      <td style="color:var(--green)">✅ Mean 유지. 대화 전체 톤 반영</td>
+    </tr>
+  </table>
+
+  <h3>Stage 2 확정 설정</h3>
+  <div class="card-inner">
+    <table style="margin:0">
+      <tr><td>백본 LR</td><td class="num">2e-6 (차등 10배)</td></tr>
+      <tr><td>헤드 LR</td><td class="num">2e-5</td></tr>
+      <tr><td>Label Smoothing</td><td class="num">0.1</td></tr>
+      <tr><td>Pooling</td><td>Mean Pooling</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- Stage 3 -->
+<h2><span class="stage-tag s3">Stage 3</span> 인코딩 구조 + 추가 HP</h2>
+<div class="card">
+  <p style="color:var(--text2);font-size:0.88em;margin-bottom:10px">조건: 9층 동결 + BS=64 (로컬 CPU 속도 최적화). 6종 자동 순회.</p>
+
+  <h3>전체 결과 (Val F1 내림차순)</h3>
+  <table>
+    <tr><th></th><th>실험</th><th>변경점</th><th>Val F1</th><th>Test 일반대화</th><th>Best Ep</th></tr>
+    <tr class="best-row"><td>🥇</td><td class="num">M3-C</td><td><strong>Speaker-aware</strong></td><td class="num" style="color:var(--green)"><strong>0.8947</strong></td><td class="num" style="color:var(--green)"><strong>85건</strong></td><td class="num">3</td></tr>
+    <tr><td>🥈</td><td class="num">M3-D</td><td>Multi-head (3헤드 결합)</td><td class="num">0.8848</td><td class="num">84건</td><td class="num">3</td></tr>
+    <tr><td>3</td><td class="num">M2-H3</td><td>Head LR 3e-5</td><td class="num">0.8826</td><td class="num">81건</td><td class="num">3</td></tr>
+    <tr><td>4</td><td class="num">M3-B</td><td>Ending Pooling</td><td class="num">0.8808</td><td class="num">78건</td><td class="num">3</td></tr>
+    <tr><td>5</td><td class="num">M2-H2</td><td>Dropout 0.5</td><td class="num">0.8786</td><td class="num">82건</td><td class="num">3</td></tr>
+    <tr><td>6</td><td class="num">M2-H1</td><td>Dropout 0.1</td><td class="num">0.8785</td><td class="num">81건</td><td class="num">2</td></tr>
+  </table>
+
+  <h3>그룹별 분석</h3>
+
+  <div class="card-inner">
+    <p><strong style="color:var(--purple)">인코딩 구조 비교 (핵심)</strong></p>
+    <table style="margin:4px 0">
+      <tr><th>구조</th><th>Val F1</th><th>Test 일반</th><th>타겟 4축</th></tr>
+      <tr class="best-row"><td><strong>Speaker-aware</strong> (화자 A/B 분리)</td><td class="num" style="color:var(--green)">0.8947</td><td class="num" style="color:var(--green)">85건</td><td>발화 대칭성, 존댓말 비대칭</td></tr>
+      <tr><td>Multi-head (대등성+마무리+위협)</td><td class="num">0.8848</td><td class="num">84건</td><td>종합 (4축 전체)</td></tr>
+      <tr><td>Ending Pooling (마지막 64토큰)</td><td class="num">0.8808</td><td class="num">78건</td><td>에스칼레이션, 마무리 톤</td></tr>
+    </table>
+  </div>
+
+  <div class="insight success">
+    <strong>Speaker-aware가 1위!</strong> 화자 A/B를 분리하여 <strong>"권력 비대칭"</strong>을 직접 감지. 4축 분석의 "발화 대칭성"·"존댓말 비대칭" 축이 실제로 가장 중요했음을 수치로 증명.
+  </div>
+
+  <div class="card-inner">
+    <p><strong style="color:var(--text)">추가 HP 비교</strong></p>
+    <table style="margin:4px 0">
+      <tr><th>변수</th><th>결론</th></tr>
+      <tr><td>Dropout (0.1 vs 0.3 vs 0.5)</td><td>0.8785 ≈ 0.8786 → <strong>영향 없음</strong>. 기준 0.3 유지</td></tr>
+      <tr><td>Head LR (2e-5 vs 3e-5)</td><td>3e-5가 +0.004 → 미미한 개선. 추가 검토 가능</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 전체 여정 -->
+<h2>전체 여정: 34건 → 85건</h2>
+<div class="card">
+  <table>
+    <tr><th>실험</th><th>핵심 변경</th><th>Test 일반대화</th><th>돌파 요인</th></tr>
+    <tr><td class="num">B01</td><td>Baseline (KcELECTRA + 합성 694건)</td><td class="num">34건</td><td>—</td></tr>
+    <tr><td class="num">B02</td><td>15k 균형 + 이모티콘 제거</td><td class="num" style="color:var(--red)">23건</td><td style="color:var(--red)">숏컷 함정</td></tr>
+    <tr><td class="num">B04</td><td>v2 전략 (33도메인 Bottom-Up)</td><td class="num" style="color:var(--green)">84건</td><td style="color:var(--blue)"><strong>데이터 전략 전환</strong></td></tr>
+    <tr><td class="num">M1-A</td><td>RoBERTa 모델 전환</td><td class="num">74건</td><td style="color:var(--green)"><strong>모델 선택</strong></td></tr>
+    <tr><td class="num">M2-C</td><td>차등 비율 10배 (백본 2e-6)</td><td class="num">77건</td><td style="color:var(--green)"><strong>지식 보존</strong></td></tr>
+    <tr><td class="num">M2-E</td><td>Label Smoothing 0.1</td><td class="num">77건</td><td style="color:var(--green)"><strong>과신 방지</strong></td></tr>
+    <tr class="best-row"><td class="num">M3-C</td><td><strong>Speaker-aware 인코딩</strong></td><td class="num" style="color:var(--green)"><strong>85건</strong></td><td style="color:var(--purple)"><strong>구조 혁신</strong></td></tr>
+  </table>
+
+  <div class="quote">
+    34건 → 85건: <strong>+51건 개선</strong> (150% 향상)<br>
+    데이터(+50건) × 모델(+3건) × 학습전략(+3건) × 구조(+8건)
+  </div>
+</div>
+
+<!-- 각 Layer 기여도 -->
+<h2>3-Layer별 기여도 분석</h2>
+<div class="card">
+  <table>
+    <tr><th>Layer</th><th>기여</th><th>핵심 근거</th></tr>
+    <tr>
+      <td style="color:var(--blue);font-weight:600">Layer 1: 데이터</td>
+      <td class="num" style="color:var(--blue)">+50건 (34→84)</td>
+      <td>Top-Down→Bottom-Up 전환. 33도메인 체계적 재현. 문체 매칭</td>
+    </tr>
+    <tr>
+      <td style="color:var(--green);font-weight:600">Layer 2: 모델+학습</td>
+      <td class="num" style="color:var(--green)">+6건 (74→77+α)</td>
+      <td>RoBERTa(MLM) 선택. 차등 10배. LS=0.1</td>
+    </tr>
+    <tr>
+      <td style="color:var(--purple);font-weight:600">Layer 3: 구조</td>
+      <td class="num" style="color:var(--purple)">+8건 (77→85)</td>
+      <td>Speaker-aware 인코딩. 화자 간 권력 비대칭 직접 감지</td>
+    </tr>
+  </table>
+
+  <div class="insight">
+    <strong>가장 큰 기여는 데이터 전략(Layer 1)</strong>이지만, 모델+구조(Layer 2+3)가 없었으면 77건에서 멈췄을 것. <strong>3개 Layer가 시너지</strong>를 이룸.
+  </div>
+</div>
+
+<!-- 현재 최적 조합 -->
+<h2>현재 최적 조합</h2>
+<div class="card">
+  <div class="card-inner">
+    <table style="margin:0">
+      <tr><th>항목</th><th>선택</th><th>근거 실험</th></tr>
+      <tr><td>모델</td><td><strong>klue/roberta-base</strong></td><td>M1-A (1단계)</td></tr>
+      <tr><td>풀링</td><td><strong>Speaker-aware</strong> (홀수/짝수턴 분리)</td><td>M3-C (3단계)</td></tr>
+      <tr><td>백본 LR</td><td class="num"><strong>2e-6</strong> (차등 10배)</td><td>M2-C (2단계)</td></tr>
+      <tr><td>헤드 LR</td><td class="num">2e-5</td><td>—</td></tr>
+      <tr><td>Label Smoothing</td><td class="num"><strong>0.1</strong></td><td>M2-E (2단계)</td></tr>
+      <tr><td>Dropout</td><td class="num">0.3 (변경 불필요)</td><td>M2-H1/H2 (3단계)</td></tr>
+      <tr><td>MAX_LEN</td><td class="num">256</td><td>S02b</td></tr>
+      <tr><td>데이터</td><td>15,000건 (5×3,000 균형, v2 전략)</td><td>B04</td></tr>
+    </table>
+  </div>
+  <p style="color:var(--text2);font-size:0.85em;margin-top:8px">
+    <strong>다음 단계:</strong> Top 3 (Speaker/Multi-head/Ending)를 Epoch 6으로 재실행 중. + 동결 해제 Final Run 예정.
+  </p>
+</div>
+
+<!-- 누적 인사이트 -->
+<h2>누적 인사이트 (18개)</h2>
+<div class="card">
+  <table>
+    <tr><th>#</th><th>확인된 사실</th><th>근거</th></tr>
+    <tr><td class="num">1</td><td>Train/Test \n 포맷 차이를 전처리로 통일하는 것이 기본</td><td>EDA</td></tr>
+    <tr><td class="num">2</td><td>합성 데이터의 길이·양을 늘려도 도메인 갭은 해결 안 됨</td><td>S01, S02</td></tr>
+    <tr><td class="num">3</td><td>Val F1 99%는 합성 데이터 과적합. Val 맹신 금지</td><td>B02</td></tr>
+    <tr><td class="num">4</td><td>이모티콘·구두점 차이 → 모델이 문체 숏컷 학습</td><td>B02</td></tr>
+    <tr><td class="num">5</td><td>Bottom-Up(33도메인 체계적 재현)이 Top-Down(위협의 반대)보다 효과적</td><td>B04</td></tr>
+    <tr><td class="num">6</td><td>RoBERTa(MLM)가 ELECTRA(RTD)보다 맥락 구분에 우수</td><td>M1-A/B/C</td></tr>
+    <tr><td class="num">7</td><td>ELECTRA 내에서도 코퍼스 다양성이 중요 (KR > Kc)</td><td>M1-B vs C</td></tr>
+    <tr><td class="num">8</td><td>차등 비율 1배→5배→10배 = Test 69→74→77건. 맥락 보존이 핵심</td><td>M2-A/B/C</td></tr>
+    <tr><td class="num">9</td><td>Label Smoothing 0.1은 Val +0.4%p, Test +3건. 과신 방지</td><td>M2-E</td></tr>
+    <tr><td class="num">10</td><td>Mean Pooling > [CLS]. 대화 전체 톤 반영이 중요</td><td>M2-G</td></tr>
+    <tr><td class="num">11</td><td>Dropout 0.1 ≈ 0.3 ≈ 0.5. 이 과제에서 Dropout은 영향 없음</td><td>M2-H1/H2</td></tr>
+    <tr><td class="num">12</td><td><strong>Speaker-aware가 전 지표 1위 (Val 0.895, Test 85건)</strong></td><td>M3-C</td></tr>
+    <tr><td class="num">13</td><td>Multi-head는 Speaker에 근접하지만 복잡도 대비 효과 부족</td><td>M3-D</td></tr>
+    <tr><td class="num">14</td><td>Ending Pooling은 Test 일반대화가 오히려 낮음 (78건)</td><td>M3-B</td></tr>
+    <tr><td class="num">15</td><td>화자 간 "권력 비대칭 감지"가 위협/일반 구분의 가장 강력한 신호</td><td>4축+M3-C</td></tr>
+    <tr><td class="num">16</td><td>합성 데이터 설계 시 Test 독립성 유지 가능 (Train+상식만으로 설계)</td><td>윤리 검토</td></tr>
+    <tr><td class="num">17</td><td>하위 9층 동결로 학습 파라미터 80% 절감. 상대 비교에 영향 없음</td><td>Stage 3</td></tr>
+    <tr><td class="num">18</td><td>Top 3 Epoch 6 + 동결 해제 Final Run 진행 중</td><td>현재</td></tr>
+  </table>
+</div>
+
+<div class="footer">
+  <p>DKTC DLthon 종합 실험 결과 리포트 | 2026-04-25</p>
+  <p style="margin-top:4px">Stage 1 (모델 3종) → Stage 2 (학습 전략 4종) → Stage 3 (구조+HP 6종) = 15회 실험 완료</p>
+</div>
+
+</div>
+</body>
+</html>

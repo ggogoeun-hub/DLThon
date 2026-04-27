@@ -1,0 +1,41 @@
+Device: cpu
+Train: 15000 | Val: 965 | Test: 500
+구두점 유지 | Epoch 10 | 동결 9층 | BS=64
+Mean Pool vs Proper Multi-head 비교
+
+============================================================
+[proper_multihead]
+============================================================
+Some weights of RobertaModel were not initialized from the model checkpoint at klue/roberta-base and are newly initialized: ['pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+  전체: 111,114,248 | 학습: 22,350,344 (20.1%)
+  Epoch 1 | Train F1: 0.4394 | Val F1: 0.7784 | 1855s << BEST
+  Epoch 2 | Train F1: 0.8481 | Val F1: 0.8878 | 1808s << BEST
+  Epoch 3 | Train F1: 0.8999 | Val F1: 0.9075 | 1727s << BEST
+  Epoch 4 | Train F1: 0.9178 | Val F1: 0.9115 | 1734s << BEST
+  Epoch 5 | Train F1: 0.9243 | Val F1: 0.9126 | 1771s << BEST
+  Epoch 6 | Train F1: 0.9310 | Val F1: 0.9187 | 1753s << BEST
+  Epoch 7 | Train F1: 0.9347 | Val F1: 0.9197 | 1762s << BEST
+  Epoch 8 | Train F1: 0.9385 | Val F1: 0.9207 | 1712s << BEST
+  Epoch 9 | Train F1: 0.9405 | Val F1: 0.9207 | 1777s
+  Epoch 10 | Train F1: 0.9408 | Val F1: 0.9197 | 1746s
+
+  >> Best: Epoch 8 | Val F1: 0.9207 | 일반대화 F1: 0.9873 | 294.1분
+              precision    recall  f1-score   support
+
+       갈취 대화     0.9149    0.8821    0.8982       195
+   기타 괴롭힘 대화     0.8788    0.8700    0.8744       200
+ 직장 내 괴롭힘 대화     0.9353    0.9691    0.9519       194
+       협박 대화     0.8798    0.9045    0.8920       178
+       일반 대화     0.9949    0.9798    0.9873       198
+
+    accuracy                         0.9212       965
+   macro avg     0.9207    0.9211    0.9207       965
+weighted avg     0.9215    0.9212    0.9212       965
+
+  >> Test 일반대화: 88건 / 100건
+
+============================================================
+비교 (기존 Mean Pool 참고: Val F1 ~0.878, Test 일반 ~81건)
+============================================================
+  Proper Multi-head | Val F1: 0.9207 | 일반 F1: 0.9873 | Test 일반: 88건 | 294.1분

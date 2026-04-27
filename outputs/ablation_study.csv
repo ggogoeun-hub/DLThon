@@ -6,4 +6,5 @@ S02,beomi/KcELECTRA-base,1200.0,,2e-05,7,128,0.9209490646097612,0.92470277410832
 S02,beomi/KcELECTRA-base,1200.0,,2e-05,7,256,0.9368548483881554,0.940554821664465,v3: 1200 synthetic + max_len=256,
 B02,beomi/KcELECTRA-base,,경량EDA(삭제+스왑+구두점),2e-05,7,256,0.9902285457391392,0.9902222222222222,"baseline.csv v2 - 이모티콘 제거, 경량 증강","baseline.csv (v2, 15000건)"
 B03,beomi/KcELECTRA-base,3000.0,경량EDA + 문체보정 + label_smoothing=0.1,2e-05,7,256,0.9911098534509444,0.9911111111111112,"숏컷 해소: 합성 일반 마침표/존댓말 보정, label smoothing 0.1","15,000건 (5×3,000, 문체 보정 + label smoothing)"
-B04,klue/roberta-base,3000.0,경량EDA + label_smoothing=0.1,2e-05,7,256,0.9915603713061796,0.9915555555555555,"v2 전략 + RoBERTa. 33도메인 합성, 마침표/존댓말 test 일치","baseline_B04.csv (v2 전략, 33도메인 Gemini 합성, 15k)"
+B04,klue/roberta-base,3000.0,경량EDA + label_smoothing=0.1,2e-05,7,256,0.9915603713061796,0.9915555555555556,"v2 전략 + RoBERTa. 33도메인 합성, 마침표/존댓말 test 일치","baseline_B04.csv (v2 전략, 33도메인 Gemini 합성, 15k)"
+B04b,beomi/KcELECTRA-base,3000.0,경량EDA + label_smoothing=0.1,2e-05,7,256,0.9897828625627536,0.9897777777777778,"v2 전략 + KcELECTRA (모델 효과 분리). 33도메인 합성, 마침표/존댓말 test 일치","baseline_B04.csv (v2 전략, 33도메인 Gemini 합성, 15k)"

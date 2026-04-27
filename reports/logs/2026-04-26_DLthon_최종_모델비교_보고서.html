@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DLthon DKTC — Stage 3 최종 결과 및 모델 간 예측 분석</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e17; --card: #1a2332; --card2: #141e2d; --border: #2a3545;
+  --text: #e2e8f0; --text2: #8892a4; --cyan: #06b6d4; --yellow: #f59e0b;
+  --red: #ef4444; --blue: #3b82f6; --green: #10b981;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.7; padding: 40px 20px; }
+.container { max-width: 960px; margin: 0 auto; }
+h1 { color: var(--cyan); font-size: 1.7rem; font-weight: 700; margin-bottom: 6px; }
+.subtitle { color: var(--text2); font-size: 0.92rem; margin-bottom: 32px; }
+h2 { color: var(--cyan); font-size: 1.2rem; font-weight: 600; margin: 36px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+h3 { color: var(--yellow); font-size: 1rem; font-weight: 600; margin: 22px 0 10px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 14px 0; }
+.card-inner { background: var(--card2); border-radius: 8px; padding: 16px; margin: 12px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.85rem; }
+th { background: var(--card2); color: var(--cyan); font-weight: 600; padding: 10px 12px; text-align: left; border-bottom: 2px solid var(--border); }
+td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:hover td { background: rgba(6,182,212,0.04); }
+.mono { font-family: 'JetBrains Mono', monospace; }
+.up { color: var(--green); font-weight: 600; }
+.down { color: var(--red); font-weight: 600; }
+.best { color: var(--yellow); font-weight: 700; }
+.tag { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+.tag-gold { background: rgba(245,158,11,0.15); color: var(--yellow); border: 1px solid rgba(245,158,11,0.3); }
+.tag-red { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+.tag-green { background: rgba(16,185,129,0.12); color: var(--green); border: 1px solid rgba(16,185,129,0.25); }
+.tag-blue { background: rgba(59,130,246,0.12); color: var(--blue); border: 1px solid rgba(59,130,246,0.25); }
+.tag-gray { background: rgba(148,163,184,0.10); color: var(--text2); border: 1px solid rgba(148,163,184,0.2); }
+.insight { background: rgba(6,182,212,0.08); border-left: 3px solid var(--cyan); padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 0.9rem; }
+.warn { background: rgba(239,68,68,0.08); border-left: 3px solid var(--red); padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 0.9rem; }
+.conv { background: var(--card2); border-radius: 6px; padding: 12px 16px; margin: 8px 0; font-size: 0.83rem; line-height: 1.6; color: var(--text); border-left: 3px solid var(--border); }
+.conv-label { font-size: 0.75rem; color: var(--text2); margin-bottom: 4px; }
+.footer { text-align: center; color: var(--text2); font-size: 0.8rem; margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border); }
+.kpi-row { display: flex; gap: 12px; margin: 16px 0; flex-wrap: wrap; }
+.kpi { flex: 1; min-width: 130px; background: var(--card2); border-radius: 10px; padding: 16px; text-align: center; border: 1px solid var(--border); }
+.kpi-value { font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; font-weight: 700; }
+.kpi-label { color: var(--text2); font-size: 0.75rem; margin-top: 4px; }
+.venn { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+.venn-item { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; text-align: center; min-width: 100px; }
+.venn-num { font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 700; }
+.venn-label { font-size: 0.72rem; color: var(--text2); margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Stage 3 최종 결과 및 모델 간 예측 분석</h1>
+<p class="subtitle">DLthon DKTC 5-Class 분류 | klue/roberta-base | 동결 9층 | 2026-04-26</p>
+
+<!-- KPI -->
+<div class="kpi-row">
+  <div class="kpi">
+    <div class="kpi-value" style="color:var(--yellow);">M3-D</div>
+    <div class="kpi-label">최종 선정 모델</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-value" style="color:var(--cyan);">0.9115</div>
+    <div class="kpi-label">Val Macro F1</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-value" style="color:var(--green);">88건</div>
+    <div class="kpi-label">Test 일반대화 정분류</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-value" style="color:var(--text2);">6ep</div>
+    <div class="kpi-label">Best Epoch</div>
+  </div>
+</div>
+
+<!-- ========== 1. Stage 3 결과 ========== -->
+<h2>1. Stage 3 풀링 구조 비교 (3ep → 6ep)</h2>
+<div class="card">
+  <h3>실험 조건</h3>
+  <p style="color:var(--text2); font-size:0.88rem;">공통: klue/roberta-base, 동결 9층, BS=64, 차등 LR (Backbone 2e-6 / Head 2e-5), Label Smoothing 0.1, Dropout 0.3</p>
+
+  <h3>3 구조 설명</h3>
+  <div class="card-inner">
+    <table>
+      <tr><th>구조</th><th>방식</th><th>핵심 아이디어</th></tr>
+      <tr><td><strong>Ending Pooling</strong></td><td>대화 마지막 64토큰 평균</td><td>대화 결말부의 톤이 위협 vs 일반을 결정</td></tr>
+      <tr><td><strong>Speaker-aware</strong></td><td>홀수/짝수 토큰 분리 풀링 → concat</td><td>화자 간 권력 비대칭 감지</td></tr>
+      <tr><td><strong>Multi-head</strong></td><td>Mean Pool + 보조 헤드 3개 (equality, ending, threat)</td><td>위협 신호를 명시적으로 분리</td></tr>
+    </table>
+  </div>
+
+  <h3>3ep vs 6ep 비교</h3>
+  <table>
+    <tr><th>구조</th><th>3ep Val F1</th><th>6ep Val F1</th><th>변화</th><th>3ep Test</th><th>6ep Test</th><th>변화</th></tr>
+    <tr>
+      <td>M3-B Ending</td>
+      <td class="mono">0.8808</td><td class="mono">0.8994</td><td class="up">+1.86%p</td>
+      <td class="mono">78건</td><td class="mono">84건</td><td class="up">+6건</td>
+    </tr>
+    <tr>
+      <td>M3-C Speaker</td>
+      <td class="mono">0.8947</td><td class="mono">0.9113</td><td class="up">+1.66%p</td>
+      <td class="mono">85건</td><td class="mono">85건</td><td>±0</td>
+    </tr>
+    <tr style="background:rgba(245,158,11,0.06);">
+      <td><strong>M3-D Multi-head</strong></td>
+      <td class="mono">0.8848</td><td class="mono best">0.9115</td><td class="up">+2.67%p</td>
+      <td class="mono">84건</td><td class="mono best">88건</td><td class="up">+4건</td>
+    </tr>
+  </table>
+
+  <div class="insight">
+    <strong>순위 역전:</strong> 3ep에서 Speaker-aware(85건)가 1위 → 6ep에서 Multi-head(88건)로 역전. Multi-head는 수렴이 느리지만 충분한 에폭에서 더 높은 성능 도달.
+  </div>
+
+  <h3>M3-D 6ep 학습 곡선</h3>
+  <table>
+    <tr><th>Epoch</th><th>Train F1</th><th>Val F1</th><th>시간</th><th></th></tr>
+    <tr><td>1</td><td class="mono">0.5198</td><td class="mono">0.8264</td><td class="mono">30분</td><td>BEST</td></tr>
+    <tr><td>2</td><td class="mono">0.8637</td><td class="mono">0.8899</td><td class="mono">162분</td><td>BEST</td></tr>
+    <tr><td>3</td><td class="mono">0.9005</td><td class="mono">0.9043</td><td class="mono">25분</td><td>BEST</td></tr>
+    <tr><td>4</td><td class="mono">0.9137</td><td class="mono">0.9012</td><td class="mono">23분</td><td></td></tr>
+    <tr><td>5</td><td class="mono">0.9204</td><td class="mono">0.9079</td><td class="mono">—</td><td></td></tr>
+    <tr style="background:rgba(245,158,11,0.06);"><td><strong>6</strong></td><td class="mono">0.9262</td><td class="mono best">0.9115</td><td class="mono">—</td><td><span class="tag tag-gold">BEST</span></td></tr>
+  </table>
+</div>
+
+<!-- ========== 2. 동결 해제 실험 ========== -->
+<h2>2. Final Run — 동결 해제 검증</h2>
+<div class="card">
+  <table>
+    <tr><th></th><th>M3-D (동결 9층, 20%)</th><th>Final (동결 해제, 100%)</th><th></th></tr>
+    <tr><td>Val F1</td><td class="mono">0.9115</td><td class="mono">0.9248</td><td class="up">+1.33%p</td></tr>
+    <tr><td>Test 일반대화</td><td class="mono best">88건</td><td class="mono down">77건</td><td class="down">-11건</td></tr>
+  </table>
+
+  <div class="warn">
+    <strong>과적합 확인.</strong> 동결 해제 시 Val은 올랐으나 Test 일반대화가 88→77건으로 급락. 동결 9층 모델이 일반화 성능 우수.
+  </div>
+
+  <h3>Final이 놓친 11건 — M3-D는 맞췄으나 동결 해제 모델이 틀린 대화</h3>
+  <table>
+    <tr><th>ID</th><th>Final 예측</th><th>대화 내용</th><th>오분류 원인 추정</th></tr>
+    <tr>
+      <td class="mono">t_080</td><td><span class="tag tag-red">갈취</span></td>
+      <td style="font-size:0.82rem;">"아 이자식 이십분이나 늦어 죽을래" "됐고 니 한번만 더 늦으면 쌩깐다" "대신 내가 오늘 밥 사줄게"</td>
+      <td style="font-size:0.82rem;">약속 지각 → 밥 사주기. "죽을래", "쌩깐다" 키워드에 과반응</td>
+    </tr>
+    <tr>
+      <td class="mono">t_090</td><td><span class="tag tag-red">직장괴롭힘</span></td>
+      <td style="font-size:0.82rem;">"또 산더미처럼 들어가서 잠을 못 잤지" "일 폭탄으로 누구 죽일 있어"</td>
+      <td style="font-size:0.82rem;">직장 하소연 (피해자 입장). "죽일"에 과반응</td>
+    </tr>
+    <tr>
+      <td class="mono">t_094</td><td><span class="tag tag-red">기타괴롭힘</span></td>
+      <td style="font-size:0.82rem;">"가만히 좀 있어 정신없어 죽겠네" "저 새끼 고등학교부터 유명해"</td>
+      <td style="font-size:0.82rem;">인싸 친구 묘사. 놀림이 아닌 관찰인데 거친 표현에 과반응</td>
+    </tr>
+    <tr>
+      <td class="mono">t_265</td><td><span class="tag tag-red">기타괴롭힘</span></td>
+      <td style="font-size:0.82rem;">"아이스 아메리카노 차가운거 하나" "별게 다 불편하네" "너가 계산해라 난 간다"</td>
+      <td style="font-size:0.82rem;">카페 주문 장난. 친구 간 가벼운 갑질 놀이</td>
+    </tr>
+    <tr>
+      <td class="mono">t_295</td><td><span class="tag tag-red">기타괴롭힘</span></td>
+      <td style="font-size:0.82rem;">"내 방 좀 정리해줘" "안 하면 엄마한테 이른다" "내 옷 못 입게 한다" "그럼 너 때린다"</td>
+      <td style="font-size:0.82rem;">자매 간 방청소 실랑이. "때린다"에 과반응</td>
+    </tr>
+    <tr>
+      <td class="mono">t_386</td><td><span class="tag tag-red">기타괴롭힘</span></td>
+      <td style="font-size:0.82rem;">"저 새끼가 우릴 개그동아리로 등록했잖아" "가지가지해"</td>
+      <td style="font-size:0.82rem;">동아리 추억 이야기. 친구 놀림이지 괴롭힘 아님</td>
+    </tr>
+  </table>
+  <div class="insight">
+    동결 해제 모델은 <strong>"죽을래", "때린다", "새끼"</strong> 같은 키워드에 과적합하여, 맥락과 무관하게 위협으로 분류하는 경향. 동결 9층 모델은 이런 관용 표현을 맥락 속에서 판단하는 능력이 더 우수.
+  </div>
+</div>
+
+<!-- ========== 3. 모델 간 예측 겹침 ========== -->
+<h2>3. 모델 간 예측 겹침 분석</h2>
+<div class="card">
+  <p style="color:var(--text2); margin-bottom:12px;">Test 500건 중 "일반 대화"로 예측한 샘플의 교집합/차집합 분석</p>
+
+  <div class="venn">
+    <div class="venn-item" style="border-color:var(--green);">
+      <div class="venn-num" style="color:var(--green);">81</div>
+      <div class="venn-label">3모델 공통</div>
+    </div>
+    <div class="venn-item">
+      <div class="venn-num" style="color:var(--cyan);">1</div>
+      <div class="venn-label">B+C만</div>
+    </div>
+    <div class="venn-item">
+      <div class="venn-num" style="color:var(--cyan);">1</div>
+      <div class="venn-label">B+D만</div>
+    </div>
+    <div class="venn-item">
+      <div class="venn-num" style="color:var(--cyan);">3</div>
+      <div class="venn-label">C+D만</div>
+    </div>
+    <div class="venn-item">
+      <div class="venn-num" style="color:var(--text2);">1</div>
+      <div class="venn-label">B만</div>
+    </div>
+    <div class="venn-item">
+      <div class="venn-num" style="color:var(--text2);">0</div>
+      <div class="venn-label">C만</div>
+    </div>
+    <div class="venn-item" style="border-color:var(--yellow);">
+      <div class="venn-num" style="color:var(--yellow);">3</div>
+      <div class="venn-label">D만</div>
+    </div>
+  </div>
+
+  <div class="insight">
+    <strong>81건(~92%)은 3모델 모두 동의</strong>하는 "확실한 일반대화". 나머지 9건이 모델 구조별로 갈리는 경계 샘플.
+    M3-D가 가장 넓은 커버리지(88건)를 가지면서도 오탐은 2건에 불과.
+  </div>
+</div>
+
+<!-- ========== 4. 경계 샘플 상세 분석 ========== -->
+<h2>4. 경계 샘플 상세 분석 — 모델마다 판단이 갈린 대화들</h2>
+
+<div class="card">
+  <h3>4-1. M3-D만 정답 (B, C 모두 오분류) — 2건</h3>
+  <p style="color:var(--text2); font-size:0.85rem; margin-bottom:10px;">3모델 중 Multi-head만 일반대화로 정확히 분류한 Hard Negative 사례</p>
+
+  <div class="conv-label">t_191 | B: 기타괴롭힘 | C: 기타괴롭힘 | <span class="tag tag-gold">D: 일반 대화 ✓</span></div>
+  <div class="conv">"야 내 랩 들어볼래? 나 존나 잘하는듯" "꺼져쫌 진짜" "니가 뜨긴 뭘떠 새꺄 살이나빼" "와 인신공격한거냐" "팩트만 말했굼" "근데 오늘 너 밤에는 뭐하냐" "음 글쎄 별 계획 없는데" "좀 세우고 살아라" "내맘이다 인마"</div>
+  <div class="insight" style="font-size:0.83rem;">
+    <strong>패턴:</strong> 전반부는 거친 디스("꺼져", "살이나빼") → 후반부에 자연스러운 일상 전환("밤에 뭐하냐").<br>
+    <strong>왜 B/C가 틀렸나:</strong> "새꺄", "인신공격" 등 표면 키워드만으로 괴롭힘 판단.<br>
+    <strong>왜 D가 맞았나:</strong> threat 보조 헤드가 "실제 위협 의도 없음"을 감지. 쌍방 대등한 디스 + 평화로운 마무리.
+  </div>
+
+  <div class="conv-label">t_210 | B: 협박 | C: 협박 | <span class="tag tag-gold">D: 일반 대화 ✓</span></div>
+  <div class="conv">"친구라고 생각했는데 뒤에서는 남들한테 내 욕을 하고 다녔대. 너무 화나서 참을 수가 없어!" "기분이 언짢으시군요." "마음 같아서는 당장 가서 따지고 싶어. 얼굴 보고 싸우고 싶어!" "지금 당장 그 행동을 하면 기분이 좀 나아질 것 같으신가요?"</div>
+  <div class="insight" style="font-size:0.83rem;">
+    <strong>패턴:</strong> 감정 상담 대화 (내담자 → 상담사). 분노 표현이지 실제 위협이 아님.<br>
+    <strong>왜 B/C가 틀렸나:</strong> "따지고 싶어", "싸우고 싶어" → 공격 의도로 오인.<br>
+    <strong>왜 D가 맞았나:</strong> equality 보조 헤드가 "상담사-내담자" 비대칭 구조를 인식하고, ending 보조 헤드가 위로로 마무리되는 패턴 감지.
+  </div>
+
+  <h3>4-2. M3-D + M3-C 정답, M3-B만 오분류 — 3건</h3>
+
+  <div class="conv-label">t_165 | <span class="tag tag-red">B: 기타괴롭힘 ✗</span> | C: 일반 ✓ | D: 일반 ✓</div>
+  <div class="conv">"커피 먹다가 입천장 다 데일뻔했네 졸라 뜨거" "이게 뭐가 뜨겁냐 나약한 새끼" "와 이자식은 혀에 감각이 없나" "니가 나약한거다 더 성장해와라" "애기는 호호 불어서 먹어라"</div>
+  <div class="insight" style="font-size:0.83rem;">
+    친구끼리 커피 뜨거움으로 놀리기. "나약한 새끼"가 장난이지 실제 괴롭힘이 아님. Ending이 마지막 64토큰 위주로 보기 때문에 결말의 "애기는 호호 불어서 먹어라" 장난 뉘앙스를 놓침.
+  </div>
+
+  <div class="conv-label">t_167 | <span class="tag tag-red">B: 기타괴롭힘 ✗</span> | C: 일반 ✓ | D: 일반 ✓</div>
+  <div class="conv">"와 오늘 괜히 기분이 좋네" "오늘 컨디션도 좋고 날씨도 딱 좋고" "나랑 오늘 놀러갈래 영화 볼까" "듄이라는 영화 개봉했던데"</div>
+  <div class="insight" style="font-size:0.83rem;">
+    완전히 무해한 일상 대화. Ending Pooling이 왜 이것을 오분류했는지는 불분명 — 마지막 토큰에 특정 패턴이 영향을 준 것으로 추정.
+  </div>
+
+  <div class="conv-label">t_327 | <span class="tag tag-red">B: 기타괴롭힘 ✗</span> | C: 일반 ✓ | D: 일반 ✓</div>
+  <div class="conv">"내가 웃긴일 말해주께" "미니가습기 필터 혹시 안 뗐어" "필터분이 하나 더 들어있었거즌 여유 필터분 그거 그대로 상자안에 넣어서 책상에 뒀는데 아침에 좌탁에 있는거야"</div>
+  <div class="insight" style="font-size:0.83rem;">
+    미니가습기 에피소드 일상 대화. 구어체가 거칠어 보이나 위협 요소 전무. B(Ending)만 오분류.
+  </div>
+
+  <h3>4-3. M3-D + M3-B 정답, M3-C만 오분류 — 1건</h3>
+
+  <div class="conv-label">t_158 | B: 일반 ✓ | <span class="tag tag-red">C: 기타괴롭힘 ✗</span> | D: 일반 ✓</div>
+  <div class="conv">"나 요즘 살 개쪘다" "그래보임" "뭐 이 새끼가" "맨날 처먹고 운동도 안하니까 살찌지 돼지야" "빡치는데 팩트라 할말이 없네" "그만 처먹고 나가서 좀 뛰어라 뱃살 극혐" "아 이새끼는 말라서 개부럽네 개꿀"</div>
+  <div class="insight" style="font-size:0.83rem;">
+    쌍방 대등한 다이어트 놀림. "돼지야", "뱃살 극혐" → Speaker-aware가 화자 간 비대칭으로 오인. 실제로는 받아치는 구조("팩트라 할말이 없네", "이새끼는 말라서 개부럽네")로 대등함.
+  </div>
+
+  <h3>4-4. M3-D가 놓친 것 — B 또는 C만 정답 — 2건</h3>
+
+  <div class="conv-label">t_068 | B: 일반 ✓ | C: 일반 ✓ | <span class="tag tag-red">D: 기타괴롭힘 ✗</span></div>
+  <div class="conv">"옥상에서 사람이 떨어졌어요." "사람이 떨어졌다고요? 위치가 어디세요?" "경기도 광주시 오포읍 문형리 행복 아파트인데요" "몇층에서 떨어졌는지는 보셨나요?" "아니요 어디서 떨어졌는지는 못봤어요."</div>
+  <div class="insight" style="font-size:0.83rem;">
+    119 사고 신고 전화. "떨어졌다"가 반복되며 threat 보조 헤드가 폭력 신호로 오감지. 마침표 다수 포함된 존댓말 형식도 합성 데이터와 다른 분포.
+  </div>
+
+  <div class="conv-label">t_477 | B: 일반 ✓ | <span class="tag tag-red">C: 갈취 ✗</span> | <span class="tag tag-red">D: 갈취 ✗</span></div>
+  <div class="conv">"흑흑 나 도저히 못찾아 찾아줘" "디자이너들이 생각이없다니까" "엠제이드사지마 물론돈없어아직" "가방필요한데어떡해 잘좀찾아보" "말일까지 찾아"</div>
+  <div class="insight" style="font-size:0.83rem;">
+    가방 쇼핑 대화. "돈없어", "찾아줘", "말일까지" 조합이 갈취 키워드 패턴과 유사. B(Ending)만 마지막 턴의 무해한 맥락으로 정답 도출.
+  </div>
+</div>
+
+<!-- ========== 5. 패턴 종합 ========== -->
+<h2>5. 경계 샘플 패턴 종합</h2>
+<div class="card">
+  <table>
+    <tr><th>패턴 유형</th><th>해당 샘플</th><th>B (Ending)</th><th>C (Speaker)</th><th>D (Multi-head)</th></tr>
+    <tr>
+      <td><strong>거친 장난 (쌍방 디스)</strong></td>
+      <td class="mono">t_158, t_165, t_191</td>
+      <td>1/3 정답</td>
+      <td>1/3 정답</td>
+      <td class="best">3/3 정답</td>
+    </tr>
+    <tr>
+      <td><strong>감정 상담 (분노 표출)</strong></td>
+      <td class="mono">t_210</td>
+      <td>0/1</td>
+      <td>0/1</td>
+      <td class="best">1/1 정답</td>
+    </tr>
+    <tr>
+      <td><strong>무해 일상</strong></td>
+      <td class="mono">t_167, t_327</td>
+      <td>0/2</td>
+      <td class="best">2/2 정답</td>
+      <td class="best">2/2 정답</td>
+    </tr>
+    <tr>
+      <td><strong>신고 전화 (폭력 보고)</strong></td>
+      <td class="mono">t_068, t_480</td>
+      <td>1/2</td>
+      <td>1/2</td>
+      <td>1/2</td>
+    </tr>
+    <tr>
+      <td><strong>금전 언급 (쇼핑)</strong></td>
+      <td class="mono">t_477</td>
+      <td class="best">1/1 정답</td>
+      <td>0/1</td>
+      <td>0/1</td>
+    </tr>
+  </table>
+
+  <div class="insight">
+    <strong>Multi-head 강점:</strong> "거친 장난"과 "감정 상담" 패턴에서 3개 보조 헤드가 위협 의도 vs 표면 키워드를 분리.<br>
+    <strong>Multi-head 약점:</strong> 신고 전화(폭력 보고)와 금전 관련 일상 대화에서 여전히 혼동. 이는 학습 데이터에 해당 도메인의 Hard Negative가 부족한 것이 원인.
+  </div>
+</div>
+
+<!-- ========== 6. 최종 선정 ========== -->
+<h2>6. 최종 모델 선정</h2>
+<div class="card">
+  <div style="text-align:center; padding:16px 0;">
+    <span class="tag tag-gold" style="font-size:0.95rem; padding:6px 18px;">SELECTED</span>
+    <h3 style="color:var(--cyan); font-size:1.3rem; margin:10px 0 4px;">M3-D-e6 Multi-head (동결 9층, 6 Epoch)</h3>
+  </div>
+
+  <div class="card-inner">
+    <table>
+      <tr><th>항목</th><th>설정</th></tr>
+      <tr><td>모델</td><td class="mono">klue/roberta-base</td></tr>
+      <tr><td>풀링 구조</td><td>Multi-head (Mean Pool + equality/ending/threat 보조 헤드)</td></tr>
+      <tr><td>동결</td><td>하위 9층 + 임베딩 (학습 파라미터 20.1%)</td></tr>
+      <tr><td>학습률</td><td class="mono">Backbone 2e-6 / Head 2e-5 (차등 10배)</td></tr>
+      <tr><td>Label Smoothing</td><td class="mono">0.1</td></tr>
+      <tr><td>Epoch</td><td class="mono">6 (Best Epoch 6)</td></tr>
+    </table>
+  </div>
+
+  <h3>선정 근거</h3>
+  <div class="card-inner">
+    <p><strong>1. 최고 Test 성능:</strong> 일반대화 88/100건으로 3모델 중 최고. Val F1도 0.9115로 최상위.</p>
+    <p><strong>2. Hard Negative 분류력:</strong> B/C가 모두 틀린 경계 샘플 2건(t_191, t_210)을 유일하게 정답 처리.</p>
+    <p><strong>3. 동결 해제 대비 안정성:</strong> 동결 해제(Final) 시 88→77건으로 급락. 동결 9층이 과적합 방지에 효과적.</p>
+    <p><strong>4. 낮은 오탐율:</strong> D가 놓친 것은 2건(t_068, t_477)뿐이며, 이는 신고/쇼핑이라는 특수 도메인.</p>
+  </div>
+</div>
+
+<!-- ========== 7. 교훈 ========== -->
+<h2>7. 핵심 교훈</h2>
+<div class="card">
+  <div class="card-inner">
+    <p><strong style="color:var(--cyan);">"Val 맹신 금지"</strong> — Final Run: Val 0.9248(최고) → Test 77건(최저). B02 실험(Val 0.99 → Test 23건)에서도 동일 현상. 합성 데이터 기반 분류에서는 Val-Test 간 분포 차이가 크므로 Val 최적화만으로 부족.</p>
+  </div>
+  <div class="card-inner">
+    <p><strong style="color:var(--cyan);">"동결이 곧 정규화"</strong> — 하위 9층 동결이 사전학습 표현을 보존하면서 키워드 과적합을 방지. 동결 해제 모델은 "죽을래", "때린다" 등 관용 표현에 과반응하여 맥락 판단 능력 상실.</p>
+  </div>
+  <div class="card-inner">
+    <p><strong style="color:var(--cyan);">"구조적 귀납 편향의 가치"</strong> — Multi-head의 보조 헤드가 위협 신호를 명시적으로 분리하여, 같은 키워드라도 장난 vs 실제 위협을 맥락적으로 구별. 특히 "쌍방 디스"와 "감정 상담" 도메인에서 효과적.</p>
+  </div>
+</div>
+
+<div class="footer">
+  DLthon DKTC Stage 3 최종 분석 보고서 | Generated by Claude Code | 2026-04-26
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,7 @@
+exp_id,desc,val_f1,normal_val_f1,test_normal,best_epoch,time_min
+M3-C,Speaker-aware,0.8947,0.9637,85,3,80.1
+M3-D,Multi-head,0.8848,0.9556,84,3,79.6
+M2-H3,Head LR 3e-5,0.8826,0.9635,81,3,79.9
+M3-B,Ending Pooling,0.8808,0.9581,78,3,82.3
+M2-H2,Dropout 0.5,0.8786,0.9554,82,3,79.1
+M2-H1,Dropout 0.1,0.8785,0.9581,81,2,90.2
